@@ -37,6 +37,9 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+//UiUtils Import
+import net.minecraft.client.gui.uiutils.UiUtils;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -89,7 +92,7 @@ public abstract class Screen extends FocusableGui implements IRenderable {
             this.fill(this.width / 2 - textWidth / 2 - 2, 2, this.width / 2 + textWidth / 2 + 2, 14, (0xAA000000) | ((alpha & 0xFF) << 24));
             this.drawCenteredString(this.font, str, this.width / 2, 4, (0xFF5555) | ((alpha & 0xFF) << 24));
         }
-
+        UiUtils.render(this, this.font, p_render_1_, p_render_2_, p_render_3_);
     }
 
     public boolean keyPressed(int p_keyPressed_1_, int p_keyPressed_2_, int p_keyPressed_3_) {
