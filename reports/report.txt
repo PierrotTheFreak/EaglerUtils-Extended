@@ -1,0 +1,56 @@
+========================================
+Eaglercraft WASM Build Report
+========================================
+
+Repository: PierrotTheFreak/EaglerUtils-Extended
+Commit:     070446f2cae3aef22264a3bcaafe79b97c54ad91
+Branch:     main
+Run ID:     32079505887
+Started:    2026-08-17 23:13:30 UTC
+
+Build task:
+  ./gradlew makeMainWasmClientBundle
+
+========================================
+BUILD OUTPUT
+========================================
+
+========================================
+BUILD RESULT
+========================================
+FAILED
+Gradle exit code: 1
+
+========================================
+ERROR INFORMATION
+========================================
+
+The Gradle build failed.
+
+Gradle exit code:
+1
+
+Likely error output from the build:
+----------------------------------------
+> Task :target_teavm_wasm_gc:makeMainWasmClientBundle FAILED
+FAILURE: Build failed with an exception.
+* What went wrong:
+Execution failed for task ':target_teavm_wasm_gc:makeMainWasmClientBundle'.
+BUILD FAILED in 4m 23s
+----------------------------------------
+
+Full Gradle output is available in:
+reports/build.log
+
+========================================
+GENERATED ARTIFACTS
+========================================
+target_teavm_wasm_gc/javascript_dist/assets.epw (26421483 bytes)
+target_teavm_wasm_gc/javascript_dist/favicon.png (1258 bytes)
+
+Total generated files: 2
+
+========================================
+BUILD COMPLETED
+========================================
+Finished: 2026-08-17 23:17:56 UTC
