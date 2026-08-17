@@ -33,30 +33,233 @@ jobs:
           cache: gradle
 
       # ============================================================
-      # PREPARE
+      # PREPARE GRADLE
       # ============================================================
 
       - name: Make Gradle wrapper executable
-        run: chmod +x ./gradlew
+        shell: bash
+        run: |
+          chmod +x ./gradlew
+
+      # ============================================================
+      # PREPARE DIRECTORIES
+      # ============================================================
+
+      - name: Prepare WASM build directories
+        shell: bash
+        run: |
+          set -e
+
+          echo "========================================"
+          echo "Preparing WASM build directories"
+          echo "========================================"
+
+          mkdir -p target_teavm_wasm_gc/javascript_dist
+          mkdir -p reports
+
+          echo
+          echo "Repository root:"
+          pwd
+
+          echo
+          echo "WASM directory:"
+          ls -lah target_teavm_wasm_gc || true
+
+          echo
+          echo "WASM JavaScript directory:"
+          ls -lah target_teavm_wasm_gc/javascript || true
+
+          echo
+          echo "WASM distribution directory:"
+          ls -lah target_teavm_wasm_gc/javascript_dist || true
+
+      # ============================================================
+      # COMPILE BOOTSTRAP.JS
+      #
+      # This is the Linux equivalent of:
+      #
+      #   compilebootstrapjs.bat
+      #
+      # and uses the exact command from:
+      #
+      #   compilebootstrapjs.sh
+      # ============================================================
+
+      - name: Compile WASM GC bootstrap.js
+        shell: bash
+        run: |
+          set -e
+
+          echo "========================================"
+          echo "Compile WASM GC Bootstrap JS"
+          echo "========================================"
+
+          SRC_FOLDER="../src/wasm-gc-teavm-bootstrap/js"
+          COMPILER="buildtools/closure-compiler.jar"
+          OUTPUT_FILE="javascript_dist/bootstrap.js"
+
+          echo
+          echo "Current directory:"
+          pwd
+
+          echo
+          echo "Source folder:"
+          echo "$SRC_FOLDER"
+
+          echo
+          echo "Compiler:"
+          echo "$COMPILER"
+
+          echo
+          echo "Output:"
+          echo "$OUTPUT_FILE"
+
+          # The upstream script expects to be executed from:
+          # target_teavm_wasm_gc
+          #
+          # Move into that directory so the paths match the
+          # original compilebootstrapjs.sh exactly.
+
+          cd target_teavm_wasm_gc
+
+          echo
+          echo "Changed directory to:"
+          pwd
+
+          echo
+          echo "Checking required files..."
+
+          if [ ! -f "$COMPILER" ]; then
+            echo
+            echo "ERROR: Closure Compiler was not found."
+            echo
+            echo "Expected:"
+            echo "$(pwd)/$COMPILER"
+            echo
+            echo "Files matching closure compiler:"
+            find .. \
+              -type f \
+              \( -iname "*closure*compiler*.jar" -o -iname "closure-compiler.jar" \) \
+              -print || true
+            exit 1
+          fi
+
+          if [ ! -f "$SRC_FOLDER/externs.js" ]; then
+            echo
+            echo "ERROR: externs.js was not found."
+            echo
+            echo "Expected:"
+            echo "$(pwd)/$SRC_FOLDER/externs.js"
+            exit 1
+          fi
+
+          if [ ! -f "$SRC_FOLDER/main.js" ]; then
+            echo
+            echo "ERROR: main.js was not found."
+            echo
+            echo "Expected:"
+            echo "$(pwd)/$SRC_FOLDER/main.js"
+            exit 1
+          fi
+
+          mkdir -p javascript_dist
+
+          echo
+          echo "Input files:"
+          ls -lh "$SRC_FOLDER/externs.js"
+          ls -lh "$SRC_FOLDER/main.js"
+
+          echo
+          echo "Closure Compiler:"
+          ls -lh "$COMPILER"
+
+          echo
+          echo "========================================"
+          echo "Running Closure Compiler"
+          echo "========================================"
+
+          java -jar "$COMPILER" \
+            --compilation_level ADVANCED_OPTIMIZATIONS \
+            --assume_function_wrapper \
+            --emit_use_strict \
+            --isolation_mode IIFE \
+            --js "$SRC_FOLDER/externs.js" \
+            "$SRC_FOLDER/main.js" \
+            --js_output_file "$OUTPUT_FILE"
+
+          echo
+          echo "========================================"
+          echo "Bootstrap compilation finished"
+          echo "========================================"
+
+          if [ ! -f "$OUTPUT_FILE" ]; then
+            echo
+            echo "ERROR: bootstrap.js was not created."
+            echo
+            echo "Expected:"
+            echo "$(pwd)/$OUTPUT_FILE"
+            echo
+            echo "Contents of javascript_dist:"
+            ls -lah javascript_dist || true
+            exit 1
+          fi
+
+          echo
+          echo "Generated bootstrap.js:"
+          ls -lh "$OUTPUT_FILE"
+
+          echo
+          echo "Bootstrap.js size:"
+          wc -c "$OUTPUT_FILE"
+
+      # ============================================================
+      # VERIFY BUILD INPUTS
+      # ============================================================
+
+      - name: Verify WASM build inputs
+        shell: bash
+        run: |
+          set -e
+
+          echo "========================================"
+          echo "WASM BUILD INPUT VERIFICATION"
+          echo "========================================"
+
+          echo
+          echo "Required bootstrap.js:"
+          ls -lh target_teavm_wasm_gc/javascript_dist/bootstrap.js
+
+          echo
+          echo "WASM JavaScript directory:"
+          find target_teavm_wasm_gc/javascript \
+            -maxdepth 1 \
+            -type f \
+            -printf '%f (%s bytes)\n' \
+            | sort || true
+
+          echo
+          echo "WASM distribution directory:"
+          find target_teavm_wasm_gc/javascript_dist \
+            -maxdepth 1 \
+            -type f \
+            -printf '%f (%s bytes)\n' \
+            | sort || true
+
+          echo
+          echo "Bootstrap.js verification:"
+          file target_teavm_wasm_gc/javascript_dist/bootstrap.js
+
+      # ============================================================
+      # BUILD
+      # ============================================================
 
       - name: Build full WASM client
         id: wasm_build
         shell: bash
         run: |
-          # ========================================================
-          # IMPORTANT
-          # ========================================================
-          # Do NOT stop this script when Gradle fails.
-          # We need to collect as much diagnostic information as
-          # possible before returning Gradle's actual exit code.
-          # ========================================================
-
           set +e
 
-          # ========================================================
-          # FILES
-          # ========================================================
-
+          # Always create a completely fresh report.
           rm -f reports/report.txt
           rm -f reports/build.log
           mkdir -p reports
@@ -64,572 +267,227 @@ jobs:
           REPORT="reports/report.txt"
           LOG="reports/build.log"
 
-          # ========================================================
-          # BASIC INFORMATION
-          # ========================================================
-
           {
-            echo "################################################################"
-            echo "# EAGLERCRAFT WASM BUILD - COMPLETE DIAGNOSTIC REPORT"
-            echo "################################################################"
+            echo "========================================"
+            echo "Eaglercraft WASM Build Report"
+            echo "========================================"
             echo
-            echo "Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            echo "Repository: $GITHUB_REPOSITORY"
+            echo "Commit:     $GITHUB_SHA"
+            echo "Branch:     $GITHUB_REF_NAME"
+            echo "Run ID:     $GITHUB_RUN_ID"
+            echo "Runner OS:  $RUNNER_OS"
+            echo "Runner:     $RUNNER_NAME"
+            echo "Started:    $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
             echo
-            echo "================================================================"
-            echo "GITHUB ACTIONS INFORMATION"
-            echo "================================================================"
-            echo
-            echo "Repository:          $GITHUB_REPOSITORY"
-            echo "Repository Owner:    $GITHUB_REPOSITORY_OWNER"
-            echo "Repository Name:     $GITHUB_REPOSITORY"
-            echo "Commit SHA:          $GITHUB_SHA"
-            echo "Branch:              $GITHUB_REF_NAME"
-            echo "Git Ref:             $GITHUB_REF"
-            echo "Event:               $GITHUB_EVENT_NAME"
-            echo "Workflow:            $GITHUB_WORKFLOW"
-            echo "Workflow Run ID:     $GITHUB_RUN_ID"
-            echo "Workflow Run Number: $GITHUB_RUN_NUMBER"
-            echo "Job:                 $GITHUB_JOB"
-            echo "Actor:               $GITHUB_ACTOR"
-            echo "Runner OS:           $RUNNER_OS"
-            echo "Runner Architecture: $RUNNER_ARCH"
-            echo "Runner Name:         $RUNNER_NAME"
-            echo "Workspace:           $GITHUB_WORKSPACE"
-            echo
-            echo "================================================================"
-            echo "BUILD INFORMATION"
-            echo "================================================================"
-            echo
-            echo "Build command:"
+            echo "Build task:"
             echo "  ./gradlew makeMainWasmClientBundle"
+            echo
+            echo "Bootstrap compiler:"
+            echo "  Closure Compiler"
+            echo
+            echo "Bootstrap source:"
+            echo "  src/wasm-gc-teavm-bootstrap/js/main.js"
+            echo
+            echo "Bootstrap output:"
+            echo "  target_teavm_wasm_gc/javascript_dist/bootstrap.js"
+            echo
+            echo "========================================"
+            echo "SYSTEM INFORMATION"
+            echo "========================================"
+            echo
+            echo "Java:"
+            java -version 2>&1
+            echo
+            echo "Gradle:"
+            ./gradlew --version
+            echo
+            echo "Disk space:"
+            df -h
+            echo
+            echo "Memory:"
+            free -h || true
             echo
             echo "Working directory:"
             pwd
             echo
+            echo "========================================"
+            echo "BUILD OUTPUT"
+            echo "========================================"
           } > "$REPORT"
-
-          # ========================================================
-          # OPERATING SYSTEM
-          # ========================================================
-
-          {
-            echo "================================================================"
-            echo "OPERATING SYSTEM"
-            echo "================================================================"
-            echo
-
-            echo "--- /etc/os-release ---"
-            cat /etc/os-release 2>&1 || true
-
-            echo
-            echo "--- uname ---"
-            uname -a 2>&1 || true
-
-            echo
-            echo "--- hostname ---"
-            hostname 2>&1 || true
-
-          } >> "$REPORT"
-
-          # ========================================================
-          # CPU
-          # ========================================================
-
-          {
-            echo
-            echo "================================================================"
-            echo "CPU INFORMATION"
-            echo "================================================================"
-            echo
-
-            echo "--- nproc ---"
-            nproc 2>&1 || true
-
-            echo
-            echo "--- lscpu ---"
-            lscpu 2>&1 || true
-
-          } >> "$REPORT"
-
-          # ========================================================
-          # MEMORY
-          # ========================================================
-
-          {
-            echo
-            echo "================================================================"
-            echo "MEMORY INFORMATION"
-            echo "================================================================"
-            echo
-
-            echo "--- free -h ---"
-            free -h 2>&1 || true
-
-            echo
-            echo "--- /proc/meminfo ---"
-            cat /proc/meminfo 2>&1 || true
-
-          } >> "$REPORT"
-
-          # ========================================================
-          # DISK
-          # ========================================================
-
-          {
-            echo
-            echo "================================================================"
-            echo "DISK INFORMATION"
-            echo "================================================================"
-            echo
-
-            echo "--- df -h ---"
-            df -h 2>&1 || true
-
-            echo
-            echo "--- df -i ---"
-            df -i 2>&1 || true
-
-          } >> "$REPORT"
-
-          # ========================================================
-          # JAVA
-          # ========================================================
-
-          {
-            echo
-            echo "================================================================"
-            echo "JAVA INFORMATION"
-            echo "================================================================"
-            echo
-
-            echo "--- java -version ---"
-            java -version 2>&1 || true
-
-            echo
-            echo "--- javac -version ---"
-            javac -version 2>&1 || true
-
-            echo
-            echo "--- JAVA_HOME ---"
-            echo "${JAVA_HOME:-NOT SET}"
-
-            echo
-            echo "--- Java properties ---"
-            java -XshowSettings:properties -version 2>&1 || true
-
-          } >> "$REPORT"
-
-          # ========================================================
-          # GRADLE
-          # ========================================================
-
-          {
-            echo
-            echo "================================================================"
-            echo "GRADLE INFORMATION"
-            echo "================================================================"
-            echo
-
-            echo "--- Gradle version ---"
-            ./gradlew --version 2>&1 || true
-
-            echo
-            echo "--- Gradle wrapper ---"
-            ls -lah ./gradlew 2>&1 || true
-
-            echo
-            echo "--- gradle-wrapper.properties ---"
-
-            if [ -f "gradle/wrapper/gradle-wrapper.properties" ]; then
-              cat gradle/wrapper/gradle-wrapper.properties 2>&1 || true
-            else
-              echo "gradle-wrapper.properties not found."
-            fi
-
-          } >> "$REPORT"
-
-          # ========================================================
-          # GIT
-          # ========================================================
-
-          {
-            echo
-            echo "================================================================"
-            echo "GIT INFORMATION"
-            echo "================================================================"
-            echo
-
-            echo "--- git version ---"
-            git --version 2>&1 || true
-
-            echo
-            echo "--- git status ---"
-            git status --short --branch 2>&1 || true
-
-            echo
-            echo "--- git log ---"
-            git log -10 --oneline --decorate 2>&1 || true
-
-            echo
-            echo "--- current commit ---"
-            git rev-parse HEAD 2>&1 || true
-
-            echo
-            echo "--- remote ---"
-            git remote -v 2>&1 || true
-
-          } >> "$REPORT"
-
-          # ========================================================
-          # PROJECT STRUCTURE
-          # ========================================================
-
-          {
-            echo
-            echo "================================================================"
-            echo "PROJECT STRUCTURE"
-            echo "================================================================"
-            echo
-
-            echo "--- Top-level files ---"
-            find . -maxdepth 2 -type f \
-              ! -path './.git/*' \
-              ! -path './target_teavm_wasm_gc/javascript_dist/*' \
-              | sort 2>&1 || true
-
-            echo
-            echo "--- Gradle files ---"
-            find . -type f \
-              \( -name "*.gradle" -o -name "*.gradle.kts" -o -name "gradle.properties" \) \
-              ! -path './.git/*' \
-              | sort 2>&1 || true
-
-          } >> "$REPORT"
-
-          # ========================================================
-          # ENVIRONMENT
-          # ========================================================
-
-          {
-            echo
-            echo "================================================================"
-            echo "RELEVANT ENVIRONMENT VARIABLES"
-            echo "================================================================"
-            echo
-
-            env | sort | grep -E \
-              '^(JAVA|JDK|GRADLE|JAVA_TOOL_OPTIONS|_JAVA_OPTIONS|CI|GITHUB|RUNNER|PATH|HOME|USER|SHELL|LANG|LC_)' \
-              2>&1 || true
-
-          } >> "$REPORT"
-
-          # ========================================================
-          # GRADLE DAEMON / PROCESSES BEFORE BUILD
-          # ========================================================
-
-          {
-            echo
-            echo "================================================================"
-            echo "PROCESSES BEFORE BUILD"
-            echo "================================================================"
-            echo
-
-            ps auxww 2>&1 || true
-
-          } >> "$REPORT"
-
-          # ========================================================
-          # BUILD START
-          # ========================================================
-
-          {
-            echo
-            echo "################################################################"
-            echo "# STARTING GRADLE BUILD"
-            echo "################################################################"
-            echo
-            echo "Start time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-            echo
-            echo "Command:"
-            echo "./gradlew makeMainWasmClientBundle"
-            echo
-            echo "================================================================"
-            echo "FULL GRADLE OUTPUT"
-            echo "================================================================"
-            echo
-          } >> "$REPORT"
 
           echo "Running Gradle build..."
 
-          # ========================================================
-          # RUN BUILD
-          # ========================================================
-
-          ./gradlew \
-            makeMainWasmClientBundle \
+          ./gradlew makeMainWasmClientBundle \
             --stacktrace \
             --info \
             2>&1 | tee "$LOG"
 
           BUILD_EXIT=${PIPESTATUS[0]}
 
-          # ========================================================
-          # APPEND COMPLETE BUILD LOG
-          # ========================================================
-
           {
             echo
-            echo "================================================================"
-            echo "END OF GRADLE OUTPUT"
-            echo "================================================================"
-            echo
+            echo "========================================"
+            echo "BUILD RESULT"
+            echo "========================================"
           } >> "$REPORT"
 
-          # ========================================================
-          # BUILD RESULT
-          # ========================================================
+          if [ "$BUILD_EXIT" -eq 0 ]; then
 
-          {
-            echo
-            echo "################################################################"
-            echo "# BUILD RESULT"
-            echo "################################################################"
-            echo
-            echo "Exit code: $BUILD_EXIT"
-            echo
+            echo "SUCCESS" | tee -a "$REPORT"
 
-            if [ "$BUILD_EXIT" -eq 0 ]; then
-              echo "RESULT: SUCCESS"
-            else
-              echo "RESULT: FAILED"
-            fi
+          else
 
-            echo
-            echo "Build finished:"
-            date -u '+%Y-%m-%d %H:%M:%S UTC'
-
-          } >> "$REPORT"
-
-          # ========================================================
-          # FAILURE DIAGNOSTICS
-          # ========================================================
-
-          if [ "$BUILD_EXIT" -ne 0 ]; then
+            echo "FAILED" | tee -a "$REPORT"
+            echo "Gradle exit code: $BUILD_EXIT" | tee -a "$REPORT"
 
             {
               echo
-              echo "################################################################"
-              echo "# FAILURE DIAGNOSTICS"
-              echo "################################################################"
+              echo "========================================"
+              echo "ERROR INFORMATION"
+              echo "========================================"
               echo
-
-              echo "================================================================"
-              echo "LAST 500 LINES OF GRADLE OUTPUT"
-              echo "================================================================"
+              echo "The Gradle build failed."
               echo
-
-              tail -n 500 "$LOG" 2>&1 || true
-
+              echo "Gradle exit code:"
+              echo "$BUILD_EXIT"
               echo
-              echo "================================================================"
-              echo "ALL LINES CONTAINING ERROR / EXCEPTION INFORMATION"
-              echo "================================================================"
+              echo "Last 300 lines of Gradle output:"
+              echo "----------------------------------------"
+              tail -n 300 "$LOG" || true
+              echo "----------------------------------------"
               echo
+              echo "Detected error/failure lines:"
+              echo "----------------------------------------"
 
               grep -Ein \
-                'error|exception|caused by|failure|failed|fatal|panic|outofmemory|stackoverflow|assertion|runtimeexception|illegalstateexception|illegalargumentexception|nullpointerexception|execution failed|what went wrong|build failed' \
+                'error:|error |failed|failure|exception|caused by:|what went wrong:|execution failed|filenotfound|nosuchfile|outofmemory|java heap|teavm|wasm|webassembly' \
                 "$LOG" \
-                2>&1 || true
+                | tail -n 200 || true
 
+              echo "----------------------------------------"
               echo
-              echo "================================================================"
-              echo "GRADLE FAILURE SECTION"
-              echo "================================================================"
-              echo
-
-              grep -n -B 20 -A 100 \
-                'FAILURE: Build failed with an exception' \
-                "$LOG" \
-                2>&1 || true
-
-              echo
-              echo "================================================================"
-              echo "JAVA EXCEPTION STACK TRACES"
-              echo "================================================================"
-              echo
-
-              grep -n -B 5 -A 50 \
-                -E '(^|[[:space:]])(Caused by:|[A-Za-z0-9_.]+Exception:|[A-Za-z0-9_.]+Error:)' \
-                "$LOG" \
-                2>&1 || true
+              echo "Full Gradle output is available in:"
+              echo "reports/build.log"
 
             } >> "$REPORT"
 
           fi
 
           # ========================================================
-          # POST-BUILD PROCESSES
+          # GENERATED ARTIFACTS
           # ========================================================
 
           {
             echo
-            echo "================================================================"
-            echo "PROCESSES AFTER BUILD"
-            echo "================================================================"
-            echo
-
-            ps auxww 2>&1 || true
-
-          } >> "$REPORT"
-
-          # ========================================================
-          # GENERATED OUTPUT
-          # ========================================================
-
-          {
-            echo
-            echo "################################################################"
-            echo "# GENERATED WASM OUTPUT"
-            echo "################################################################"
-            echo
-
+            echo "========================================"
+            echo "GENERATED ARTIFACTS"
+            echo "========================================"
           } >> "$REPORT"
 
           if [ -d "target_teavm_wasm_gc/javascript_dist" ]; then
 
+            find "target_teavm_wasm_gc/javascript_dist" \
+              -type f \
+              -printf '%p (%s bytes)\n' \
+              | sort >> "$REPORT"
+
+            ARTIFACT_COUNT=$(find \
+              "target_teavm_wasm_gc/javascript_dist" \
+              -type f \
+              | wc -l)
+
             {
-              echo "Output directory EXISTS."
               echo
-              echo "Path:"
-              realpath target_teavm_wasm_gc/javascript_dist 2>&1 || true
-
-              echo
-              echo "================================================================"
-              echo "DIRECTORY LISTING"
-              echo "================================================================"
-              echo
-
-              find target_teavm_wasm_gc/javascript_dist \
-                -type f \
-                -printf '%p\n' \
-                | sort 2>&1 || true
-
-              echo
-              echo "================================================================"
-              echo "FILE DETAILS"
-              echo "================================================================"
-              echo
-
-              find target_teavm_wasm_gc/javascript_dist \
-                -type f \
-                -printf '%p | %s bytes | modified %TY-%Tm-%Td %TH:%TM:%TS\n' \
-                | sort 2>&1 || true
-
-              ARTIFACT_COUNT=$(find target_teavm_wasm_gc/javascript_dist -type f | wc -l)
-
-              TOTAL_SIZE=$(du -sh target_teavm_wasm_gc/javascript_dist 2>/dev/null | awk '{print $1}')
-
-              echo
-              echo "Total files: $ARTIFACT_COUNT"
-              echo "Total size:  $TOTAL_SIZE"
-
+              echo "Total generated files: $ARTIFACT_COUNT"
             } >> "$REPORT"
 
           else
 
-            {
-              echo "Output directory DOES NOT EXIST."
-              echo
-              echo "Expected:"
-              echo "target_teavm_wasm_gc/javascript_dist"
-
-            } >> "$REPORT"
+            echo "No WASM output directory was created." >> "$REPORT"
 
           fi
 
           # ========================================================
-          # IMPORTANT BUILD DIRECTORIES
+          # FINAL FILE CHECKS
           # ========================================================
 
           {
             echo
-            echo "================================================================"
-            echo "TEAVM / BUILD DIRECTORY INFORMATION"
-            echo "================================================================"
+            echo "========================================"
+            echo "IMPORTANT FILE CHECKS"
+            echo "========================================"
+
             echo
+            echo "bootstrap.js:"
+            if [ -f "target_teavm_wasm_gc/javascript_dist/bootstrap.js" ]; then
+              ls -lh target_teavm_wasm_gc/javascript_dist/bootstrap.js
+            else
+              echo "MISSING"
+            fi
 
-            for DIR in \
-              "target_teavm_wasm_gc" \
-              "target_teavm_wasm_gc/build" \
-              "target_teavm_wasm_gc/javascript_dist" \
-              "build" \
-              ".gradle"; do
+            echo
+            echo "assets.epw:"
+            if [ -f "target_teavm_wasm_gc/javascript_dist/assets.epw" ]; then
+              ls -lh target_teavm_wasm_gc/javascript_dist/assets.epw
+            else
+              echo "MISSING"
+            fi
 
-              if [ -e "$DIR" ]; then
-                echo
-                echo "--- $DIR ---"
-                du -sh "$DIR" 2>&1 || true
-                ls -lah "$DIR" 2>&1 || true
-              else
-                echo
-                echo "--- $DIR ---"
-                echo "Does not exist."
-              fi
-
-            done
+            echo
+            echo "favicon.png:"
+            if [ -f "target_teavm_wasm_gc/javascript_dist/favicon.png" ]; then
+              ls -lh target_teavm_wasm_gc/javascript_dist/favicon.png
+            else
+              echo "MISSING"
+            fi
 
           } >> "$REPORT"
 
           # ========================================================
-          # DISK AFTER BUILD
+          # ENVIRONMENT / PROJECT DIAGNOSTICS
           # ========================================================
 
           {
             echo
-            echo "================================================================"
-            echo "DISK SPACE AFTER BUILD"
-            echo "================================================================"
-            echo
+            echo "========================================"
+            echo "PROJECT DIAGNOSTICS"
+            echo "========================================"
 
-            df -h 2>&1 || true
+            echo
+            echo "Tracked bootstrap-related files:"
+            git ls-files | grep -i "bootstrap" || true
+
+            echo
+            echo "All bootstrap-related files:"
+            find . \
+              -type f \
+              -iname "*bootstrap*" \
+              ! -path "./.git/*" \
+              -printf '%p (%s bytes)\n' \
+              | sort || true
+
+            echo
+            echo "All WASM-related directories:"
+            find . \
+              -type d \
+              \( -iname "*wasm*" -o -iname "*teavm*" \) \
+              ! -path "./.git/*" \
+              -print \
+              | sort || true
+
+            echo
+            echo "Git status:"
+            git status --short
 
           } >> "$REPORT"
 
-          # ========================================================
-          # GIT STATUS AFTER BUILD
-          # ========================================================
-
           {
             echo
-            echo "================================================================"
-            echo "GIT STATUS AFTER BUILD"
-            echo "================================================================"
-            echo
-
-            git status --short 2>&1 || true
-
-          } >> "$REPORT"
-
-          # ========================================================
-          # FINAL INFORMATION
-          # ========================================================
-
-          {
-            echo
-            echo "################################################################"
-            echo "# COMPLETE BUILD REPORT"
-            echo "################################################################"
-            echo
-            echo "Build exit code: $BUILD_EXIT"
-            echo
-            echo "Finished:"
-            date -u '+%Y-%m-%d %H:%M:%S UTC'
-            echo
-            echo "Full raw Gradle output:"
-            echo "reports/build.log"
-            echo
-            echo "################################################################"
-
+            echo "========================================"
+            echo "BUILD COMPLETED"
+            echo "========================================"
+            echo "Finished: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           } >> "$REPORT"
 
           # ========================================================
@@ -637,23 +495,14 @@ jobs:
           # ========================================================
 
           echo
-          echo "################################################################"
-          echo "# BUILD REPORT"
-          echo "################################################################"
-
+          echo "========== BUILD REPORT =========="
           cat "$REPORT"
+          echo "=================================="
 
-          echo
-          echo "################################################################"
-
-          # Save exit code for later steps.
-          echo "exit_code=$BUILD_EXIT" >> "$GITHUB_OUTPUT"
-
-          # Preserve actual Gradle exit code.
           exit "$BUILD_EXIT"
 
       # ============================================================
-      # UPLOAD WASM AS GITHUB ACTIONS ARTIFACT
+      # UPLOAD WASM ARTIFACTS
       # ============================================================
 
       - name: Upload WASM build artifacts
@@ -666,10 +515,10 @@ jobs:
           retention-days: 30
 
       # ============================================================
-      # UPLOAD COMPLETE DIAGNOSTICS
+      # UPLOAD DIAGNOSTICS
       # ============================================================
 
-      - name: Upload complete build diagnostics
+      - name: Upload build diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -679,138 +528,103 @@ jobs:
           retention-days: 30
 
       # ============================================================
-      # COMMIT REPORT + WASM TO REPOSITORY
+      # GITHUB ACTIONS SUMMARY
       # ============================================================
 
-      - name: Commit report and WASM artifacts to repository
-        if: always()
-        shell: bash
-        run: |
-          set +e
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          echo "Preparing generated files for commit..."
-
-          # --------------------------------------------------------
-          # Add report.
-          # --------------------------------------------------------
-
-          git add reports/report.txt
-
-          # --------------------------------------------------------
-          # Add WASM output.
-          # --------------------------------------------------------
-
-          if [ -d "target_teavm_wasm_gc/javascript_dist" ]; then
-            git add -f target_teavm_wasm_gc/javascript_dist/
-          fi
-
-          # --------------------------------------------------------
-          # Show what will be committed.
-          # --------------------------------------------------------
-
-          echo
-          echo "================================================================"
-          echo "FILES TO BE COMMITTED"
-          echo "================================================================"
-          echo
-
-          git status --short
-
-          # --------------------------------------------------------
-          # Check for changes.
-          # --------------------------------------------------------
-
-          if git diff --cached --quiet; then
-
-            echo
-            echo "No generated files changed."
-            echo "Nothing to commit."
-
-          else
-
-            echo
-            echo "Changes detected."
-            echo
-
-            git diff --cached --stat
-
-            echo
-            echo "Creating commit..."
-
-            git commit -m "Update WASM build artifacts [skip ci]"
-
-            COMMIT_EXIT=$?
-
-            if [ "$COMMIT_EXIT" -ne 0 ]; then
-              echo "ERROR: git commit failed."
-              exit "$COMMIT_EXIT"
-            fi
-
-            echo
-            echo "Pushing generated files back to repository..."
-
-            git push
-
-            PUSH_EXIT=$?
-
-            if [ "$PUSH_EXIT" -ne 0 ]; then
-              echo "ERROR: git push failed."
-              exit "$PUSH_EXIT"
-            fi
-
-            echo
-            echo "Repository update complete."
-
-          fi
-
-      # ============================================================
-      # FINAL JOB SUMMARY
-      # ============================================================
-
-      - name: Write GitHub Actions job summary
+      - name: Write build summary
         if: always()
         shell: bash
         run: |
           {
             echo "# Eaglercraft WASM Build"
             echo
-            echo "## Build"
+            echo "## Build Information"
             echo
             echo "- Repository: \`$GITHUB_REPOSITORY\`"
             echo "- Commit: \`$GITHUB_SHA\`"
             echo "- Branch: \`$GITHUB_REF_NAME\`"
             echo "- Run ID: \`$GITHUB_RUN_ID\`"
             echo
-            echo "## Generated Output"
+            echo "## Generated Files"
             echo
 
             if [ -d "target_teavm_wasm_gc/javascript_dist" ]; then
-
-              echo "WASM output directory exists."
-              echo
-              echo "\`target_teavm_wasm_gc/javascript_dist/\`"
-              echo
-              echo "### Files"
-              echo
-
               find target_teavm_wasm_gc/javascript_dist \
                 -type f \
-                -printf -- '- \`%p\` (%s bytes)\n' \
+                -printf '%p (%s bytes)\n' \
                 | sort
-
             else
-
-              echo "No WASM output directory was created."
-
+              echo "No output directory."
             fi
 
             echo
-            echo "## Diagnostic Files"
+            echo "## Bootstrap"
             echo
-            echo "- \`reports/report.txt\`"
-            echo "- \`reports/build.log\`"
 
+            if [ -f "target_teavm_wasm_gc/javascript_dist/bootstrap.js" ]; then
+              echo "✅ \`bootstrap.js\` exists."
+              echo
+              ls -lh target_teavm_wasm_gc/javascript_dist/bootstrap.js
+            else
+              echo "❌ \`bootstrap.js\` is missing."
+            fi
+
+            echo
+            echo "## Diagnostics"
+            echo
+            echo "Full logs are available in the uploaded diagnostic artifact."
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # ============================================================
+      # COMMIT GENERATED OUTPUT BACK TO REPOSITORY
+      #
+      # This runs even if the Gradle build failed.
+      # That means partial/generated files such as bootstrap.js,
+      # assets.epw, favicon.png, etc. can be committed.
+      # ============================================================
+
+      - name: Commit generated WASM files to repository
+        if: always()
+        shell: bash
+        run: |
+          set -e
+
+          echo "========================================"
+          echo "Commit generated WASM files"
+          echo "========================================"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          echo
+          echo "Generated files:"
+          find target_teavm_wasm_gc/javascript_dist \
+            -type f \
+            -printf '%p (%s bytes)\n' \
+            | sort || true
+
+          echo
+          echo "Git status before adding:"
+          git status --short
+
+          # Add the generated distribution.
+          git add target_teavm_wasm_gc/javascript_dist/
+
+          echo
+          echo "Git status after adding:"
+          git status --short
+
+          # Don't create empty commits.
+          if git diff --cached --quiet; then
+            echo
+            echo "No generated files changed."
+            exit 0
+          fi
+
+          git commit \
+            -m "Build WASM client [skip ci]"
+
+          echo
+          echo "Pushing generated WASM files..."
+
+          git push origin "HEAD:$GITHUB_REF_NAME"
