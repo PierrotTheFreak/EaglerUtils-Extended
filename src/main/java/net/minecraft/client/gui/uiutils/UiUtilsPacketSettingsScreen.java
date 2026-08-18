@@ -1,6 +1,7 @@
 package net.minecraft.client.gui.uiutils;
 
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.network.PacketDirection;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.network.PacketDirection;
 import net.minecraft.util.text.StringTextComponent;

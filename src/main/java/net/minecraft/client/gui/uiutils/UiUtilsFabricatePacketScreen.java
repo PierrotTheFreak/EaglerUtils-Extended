@@ -357,7 +357,7 @@ public class UiUtilsFabricatePacketScreen extends Screen {
 
         this.drawCenteredString(
                 this.font,
-                "Fabricate Packet",
+                "Fabricate Inventory Packet",
                 centerX,
                 10,
                 0xFFFFFF
