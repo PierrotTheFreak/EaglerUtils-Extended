@@ -439,6 +439,30 @@ public class UiUtilsPacketManager {
         );
     }
 
+
+    public static Set<String> getSelectedPacketTypes() {
+        Set<String> result =
+                new LinkedHashSet<>();
+    
+        for (
+                String packet :
+                        getAllPacketTypes()
+        ) {
+            if (isPacketDelayed(packet)) {
+                result.add(packet);
+            }
+        }
+    
+        return result;
+    }
+
+
+
+
+
+
+
+
     /*
      * ------------------------------------------------------------
      * Search
