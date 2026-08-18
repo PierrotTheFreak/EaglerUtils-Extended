@@ -10,8 +10,7 @@ import net.minecraft.network.play.client.CCloseWindowPacket;
 import net.minecraft.util.text.ITextComponent;
 
 public class UiUtils {
-    private static final int PANEL_X=6,PANEL_Y=6,PANEL_WIDTH=210,PANEL_PADDING=6,CONTROL_X=PANEL_X+PANEL_PADDING,CONTROL_WIDTH=PANEL_WIDTH-PANEL_PADDING*2,TITLE_HEIGHT=18,BUTTON_HEIGHT=20,BUTTON_GAP=3,BUTTON_STEP=BUTTON_HEIGHT+BUTTON_GAP,CHAT_GAP=5,CHAT_LABEL_HEIGHT=11,CHAT_INPUT_HEIGHT=20,STATUS_GAP=5,STATUS_HEIGHT=24;
-    private static final int MACRO_BUTTON_SIZE=24;
+    private static final int PANEL_X=6,PANEL_Y=6,PANEL_WIDTH=210,PANEL_PADDING=6,CONTROL_X=PANEL_X+PANEL_PADDING,CONTROL_WIDTH=PANEL_WIDTH-PANEL_PADDING*2,TITLE_HEIGHT=18,BUTTON_HEIGHT=20,BUTTON_GAP=3,BUTTON_STEP=BUTTON_HEIGHT+BUTTON_GAP,CHAT_GAP=5,CHAT_LABEL_HEIGHT=11,CHAT_INPUT_HEIGHT=20,STATUS_GAP=5,STATUS_HEIGHT=24,MACRO_BUTTON_SIZE=24;
     private static TextFieldWidget chatInput;
     private static final String[] BUTTON_NAMES={"Close Without Packet","De-sync","Send Packets","Delay Packets","Save GUI","Disconnect + Send","Fabricate Packet","Packet Inspector","Packet Logger","Packet Replay","Copy GUI Title JSON"};
     private UiUtils(){}
@@ -38,8 +37,8 @@ public class UiUtils {
     private static boolean isMacroLauncherHit(Screen screen,double mx,double my){return shouldShow(screen)&&mx>=screen.width-MACRO_BUTTON_SIZE-6&&mx<screen.width-6&&my>=6&&my<6+MACRO_BUTTON_SIZE;}
     public static boolean mouseClicked(Screen screen,double mx,double my,int button){if(!shouldShow(screen))return false;if(isMacroLauncherHit(screen,mx,my)&&(button==0||button==1)){if(screen.mc!=null)screen.mc.displayGuiScreen(new UiUtilsMacroScreen(screen));return true;}int x=(int)mx,y=(int)my;if(chatInput!=null&&isInside(mx,my,CONTROL_X,getChatInputY(),CONTROL_WIDTH,CHAT_INPUT_HEIGHT)){chatInput.mouseClicked(mx,my,button);chatInput.setFocused(true);screen.setFocused(chatInput);return true;}for(int i=0;i<BUTTON_NAMES.length;++i)if(isButtonHovered(x,y,i)&&(button==0||button==1)){handleButtonClick(screen,i);return true;}return false;}
     public static boolean mouseClicked(Screen screen,int mx,int my,int button){return mouseClicked(screen,(double)mx,(double)my,button);}
-    public static boolean keyPressed(Screen screen,int keyCode,int scanCode,int modifiers){if(!shouldShow(screen))return false;if(chatInput!=null&&chatInput.isFocused()&&chatInput.keyPressed(keyCode,scanCode,modifiers))return true;return false;}
-    public static boolean keyPressed(int keyCode,int scanCode,int modifiers){return chatInput!=null&&chatInput.isFocused()&&chatInput.keyPressed(keyCode,scanCode,modifiers);}
+    public static boolean keyPressed(Screen screen,int keyCode,int scanCode,int modifiers){if(!shouldShow(screen))return false;if(chatInput!=null&&chatInput.isFocused()){chatInput.keyPressed(keyCode,scanCode,modifiers);return true;}return false;}
+    public static boolean keyPressed(int keyCode,int scanCode,int modifiers){if(chatInput!=null&&chatInput.isFocused()){chatInput.keyPressed(keyCode,scanCode,modifiers);return true;}return false;}
     public static boolean charTyped(Screen screen,char codePoint,int modifiers){if(!shouldShow(screen))return false;if(chatInput!=null&&chatInput.isFocused()&&chatInput.charTyped(codePoint,modifiers))return true;return false;}
     public static boolean charTyped(char codePoint,int modifiers){return chatInput!=null&&chatInput.isFocused()&&chatInput.charTyped(codePoint,modifiers);}
     public static void render(Screen screen,FontRenderer font,int mx,int my,float partialTicks){if(!shouldShow(screen))return;render(screen,mx,my,partialTicks);}
