@@ -1,727 +1,548 @@
 package net.minecraft.client.gui.uiutils;
 
-import net.lax1dude.eaglercraft.EagRuntime;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.network.play.client.CCloseWindowPacket;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.network.IPacket;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.PacketDirection;
+import net.minecraft.network.ProtocolType;
+import net.minecraft.util.text.StringTextComponent;
 
-public class UiUtils {
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Queue;
+import java.util.LinkedList;
+import java.util.Set;
 
-    private static final int PANEL_X = 6;
-    private static final int PANEL_Y = 6;
+public class UiUtilsPacketManager {
 
-    private static final int PANEL_WIDTH = 210;
-    private static final int PANEL_PADDING = 6;
-
-    private static final int CONTROL_X = PANEL_X + PANEL_PADDING;
-    private static final int CONTROL_WIDTH =
-            PANEL_WIDTH - PANEL_PADDING * 2;
-
-    private static final int TITLE_HEIGHT = 18;
-
-    private static final int BUTTON_HEIGHT = 20;
-    private static final int BUTTON_GAP = 3;
-    private static final int BUTTON_STEP =
-            BUTTON_HEIGHT + BUTTON_GAP;
-
-    private static final int CHAT_GAP = 5;
-    private static final int CHAT_LABEL_HEIGHT = 11;
-    private static final int CHAT_INPUT_HEIGHT = 20;
-
-    private static final int STATUS_GAP = 5;
-    private static final int STATUS_HEIGHT = 24;
-
-    private static TextFieldWidget chatInput;
+    private static boolean sendPackets = true;
+    private static boolean delayPackets = false;
 
     /*
-     * UI Utils buttons.
+     * Packets currently waiting to be sent.
+     */
+    private static final Queue<IPacket<?>> delayedPackets =
+            new LinkedList<>();
+
+    /*
+     * Packet classes selected for Delay Packets.
      *
-     * We render these ourselves instead of using Minecraft's Button
-     * renderer. This avoids the Eagler 1.14 widget texture behavior
-     * that was causing the visible buttons to appear compressed.
+     * IMPORTANT:
+     * Starts completely empty.
+     *
+     * We use Class<?> instead of Class<? extends IPacket<?>> because
+     * Java's generic type information for packet.getClass() is raw
+     * in this workspace.
      */
-    private static final String[] BUTTON_NAMES = {
-            "Close Without Packet",
-            "De-sync",
-            "Send Packets",
-            "Delay Packets",
-            "Save GUI",
-            "Disconnect + Send",
-            "Fabricate Packet",
-            "Copy GUI Title JSON"
-    };
+    private static final Set<Class<?>> delayedPacketTypes =
+            new LinkedHashSet<>();
 
-    public static boolean shouldShow(Screen screen) {
-        return screen instanceof ContainerScreen
-                || screen instanceof ChatScreen;
-    }
-
-    public static void init(Screen screen) {
-        chatInput = null;
+    private UiUtilsPacketManager() {
     }
 
     /*
      * ------------------------------------------------------------
-     * Button layout
+     * Global Send / Delay state
      * ------------------------------------------------------------
      */
 
-    private static int getButtonY(int index) {
-        return PANEL_Y
-                + TITLE_HEIGHT
-                + 4
-                + index * BUTTON_STEP;
+    public static boolean isSendPacketsEnabled() {
+        return sendPackets;
     }
 
-    private static boolean isButtonHovered(
-            int mouseX,
-            int mouseY,
-            int index
-    ) {
-        int x = CONTROL_X;
-        int y = getButtonY(index);
-
-        return mouseX >= x
-                && mouseX < x + CONTROL_WIDTH
-                && mouseY >= y
-                && mouseY < y + BUTTON_HEIGHT;
+    public static boolean isDelayPacketsEnabled() {
+        return delayPackets;
     }
 
-    private static void drawButton(
-            Screen screen,
-            FontRenderer font,
-            String text,
-            int x,
-            int y,
-            int width,
-            int height,
-            int mouseX,
-            int mouseY
+    public static int getDelayedPacketCount() {
+        return delayedPackets.size();
+    }
+
+    public static void setSendPackets(
+            boolean enabled
     ) {
-        boolean hovered =
-                mouseX >= x
-                        && mouseX < x + width
-                        && mouseY >= y
-                        && mouseY < y + height;
+        sendPackets = enabled;
+    }
+
+    public static boolean toggleSendPackets() {
+        sendPackets = !sendPackets;
+        return sendPackets;
+    }
+
+    public static void setDelayPackets(
+            boolean enabled,
+            NetworkManager networkManager
+    ) {
+        boolean wasEnabled = delayPackets;
+
+        delayPackets = enabled;
 
         /*
-         * Button background.
+         * Turning Delay Packets OFF releases everything waiting.
          */
-        int backgroundColor =
-                hovered
-                        ? 0xFF555555
-                        : 0xFF333333;
+        if (wasEnabled && !enabled) {
+            flush(networkManager);
+        }
+    }
 
-        screen.fill(
-                x,
-                y,
-                x + width,
-                y + height,
-                backgroundColor
-        );
+    public static boolean toggleDelayPackets(
+            NetworkManager networkManager
+    ) {
+        delayPackets = !delayPackets;
 
         /*
-         * Thin border.
+         * Turning Delay Packets OFF flushes the queue.
          */
-        int borderColor =
-                hovered
-                        ? 0xFFFFFFFF
-                        : 0xFF777777;
+        if (!delayPackets) {
+            flush(networkManager);
+        }
 
-        screen.fill(
-                x,
-                y,
-                x + width,
-                y + 1,
-                borderColor
-        );
+        return delayPackets;
+    }
 
-        screen.fill(
-                x,
-                y + height - 1,
-                x + width,
-                y + height,
-                borderColor
-        );
+    /*
+     * ------------------------------------------------------------
+     * Dynamic packet discovery
+     * ------------------------------------------------------------
+     */
 
-        screen.fill(
-                x,
-                y,
-                x + 1,
-                y + height,
-                borderColor
-        );
+    /**
+     * Returns every packet registered by the actual PLAY protocol
+     * as SERVERBOUND.
+     *
+     * This is the actual protocol registry, not a hard-coded list.
+     */
+    public static List<Class<? extends IPacket<?>>>
+    getAllPacketClasses() {
 
-        screen.fill(
-                x + width - 1,
-                y,
-                x + width,
-                y + height,
-                borderColor
+        return ProtocolType.PLAY.getPacketClasses(
+                PacketDirection.SERVERBOUND
         );
+    }
+
+    /**
+     * Returns the dynamically discovered packet names.
+     */
+    public static String[] getAllPacketTypes() {
+
+        List<Class<? extends IPacket<?>>> packetClasses =
+                getAllPacketClasses();
+
+        String[] result =
+                new String[packetClasses.size()];
+
+        for (int i = 0; i < packetClasses.size(); ++i) {
+            result[i] =
+                    packetClasses.get(i).getSimpleName();
+        }
+
+        return result;
+    }
+
+    /**
+     * Finds a packet class by its simple class name.
+     */
+    private static Class<?> findPacketClass(
+            String packetName
+    ) {
+        List<Class<? extends IPacket<?>>> packetClasses =
+                getAllPacketClasses();
+
+        for (
+                Class<? extends IPacket<?>> packetClass
+                        : packetClasses
+        ) {
+
+            if (
+                    packetClass
+                            .getSimpleName()
+                            .equals(packetName)
+            ) {
+                return packetClass;
+            }
+        }
+
+        return null;
+    }
+
+    /*
+     * ------------------------------------------------------------
+     * Packet selection
+     * ------------------------------------------------------------
+     */
+
+    /**
+     * Returns whether a packet type is currently selected.
+     */
+    public static boolean isPacketDelayed(
+            String packetName
+    ) {
+        Class<?> packetClass =
+                findPacketClass(packetName);
+
+        return packetClass != null
+                && delayedPacketTypes.contains(
+                packetClass
+        );
+    }
+
+    /**
+     * Explicitly selects or deselects a packet.
+     */
+    public static void setPacketDelayed(
+            String packetName,
+            boolean delayed
+    ) {
+        Class<?> packetClass =
+                findPacketClass(packetName);
+
+        if (packetClass == null) {
+            return;
+        }
 
         /*
-         * Center text.
+         * Keep-alive can NEVER be delayed.
          */
-        int textWidth =
-                font.getStringWidth(text);
+        if (isKeepAlivePacket(packetClass)) {
+            delayedPacketTypes.remove(packetClass);
+            return;
+        }
 
-        screen.drawString(
-                font,
-                text,
-                x + (width - textWidth) / 2,
-                y + (height - 8) / 2,
-                0xFFFFFF
-        );
+        if (delayed) {
+            delayedPacketTypes.add(packetClass);
+        } else {
+            delayedPacketTypes.remove(packetClass);
+        }
     }
 
-    /*
-     * ------------------------------------------------------------
-     * Button actions
-     * ------------------------------------------------------------
+    /**
+     * Toggles a packet selection.
+     *
+     * @return true when the packet is now selected
      */
-
-    private static void handleButtonClick(
-            Screen screen,
-            int index
+    public static boolean togglePacketDelayed(
+            String packetName
     ) {
-        switch (index) {
-            case 0:
-                closeWithoutPacket(screen);
-                break;
+        Class<?> packetClass =
+                findPacketClass(packetName);
 
-            case 1:
-                desync(screen);
-                break;
-
-            case 2:
-                UiUtilsPacketManager.toggleSendPackets();
-                break;
-
-            case 3:
-                toggleDelayPackets(screen);
-                break;
-
-            case 4:
-                UiUtilsSavedGui.save(screen);
-                break;
-
-            case 5:
-                disconnectAndSend(screen);
-                break;
-
-            case 6:
-                if (screen.mc != null) {
-                    screen.mc.displayGuiScreen(
-                            new UiUtilsFabricatePacketScreen(screen)
-                    );
-                }
-                break;
-
-            case 7:
-                copyGuiTitleJson(screen);
-                break;
-
-            default:
-                break;
-        }
-    }
-
-    /*
-     * ------------------------------------------------------------
-     * Container actions
-     * ------------------------------------------------------------
-     */
-
-    private static void closeWithoutPacket(
-            Screen screen
-    ) {
-        if (!(screen instanceof ContainerScreen)) {
-            return;
-        }
-
-        if (screen.mc == null
-                || screen.mc.player == null) {
-            return;
-        }
-
-        if (screen.mc.player instanceof ClientPlayerEntity) {
-            ((ClientPlayerEntity) screen.mc.player)
-                    .closeScreenAndDropStack();
-        }
-    }
-
-    private static void desync(
-            Screen screen
-    ) {
-        if (!(screen instanceof ContainerScreen)) {
-            return;
-        }
-
-        if (screen.mc == null
-                || screen.mc.player == null) {
-            return;
-        }
-
-        ClientPlayerEntity player =
-                screen.mc.player;
-
-        CCloseWindowPacket packet =
-                new CCloseWindowPacket(
-                        player.openContainer.windowId
-                );
-
-        if (!UiUtilsPacketManager.handleOutgoingPacket(
-                packet,
-                player.connection.getNetworkManager()
-        )) {
-            player.connection.sendPacket(packet);
-        }
-    }
-
-    private static void toggleDelayPackets(
-            Screen screen
-    ) {
-        if (screen.mc == null
-                || screen.mc.player == null) {
-            return;
-        }
-
-        UiUtilsPacketManager.toggleDelayPackets(
-                screen.mc.player
-                        .connection
-                        .getNetworkManager()
-        );
-    }
-
-    private static void disconnectAndSend(
-            Screen screen
-    ) {
-        if (screen.mc == null
-                || screen.mc.player == null) {
-            return;
-        }
-
-        UiUtilsPacketManager.disconnectAndSend(
-                screen.mc.player
-        );
-    }
-
-    private static void copyGuiTitleJson(
-            Screen screen
-    ) {
-        if (!(screen instanceof ContainerScreen)) {
-            return;
-        }
-
-        if (screen.getTitle() == null) {
-            return;
-        }
-
-        try {
-            ITextComponent title =
-                    screen.getTitle();
-
-            String json =
-                    ITextComponent.Serializer
-                            .toJson(title);
-
-            EagRuntime.setClipboard(json);
-        } catch (Throwable throwable) {
-            EagRuntime.debugPrintStackTrace(
-                    throwable
-            );
-        }
-    }
-
-    /*
-     * ------------------------------------------------------------
-     * Chat field
-     * ------------------------------------------------------------
-     */
-
-    public static TextFieldWidget getChatInput() {
-        return chatInput;
-    }
-
-    public static void tick() {
-        if (chatInput != null) {
-            chatInput.tick();
-        }
-    }
-
-    public static boolean keyPressed(
-            Screen screen,
-            int keyCode,
-            int scanCode,
-            int modifiers
-    ) {
-        if (chatInput == null
-                || !chatInput.isFocused()) {
+        if (packetClass == null) {
             return false;
         }
 
         /*
-         * Enter / Numpad Enter.
+         * Keep-alive can NEVER be delayed.
          */
-        if (keyCode == 257 || keyCode == 335) {
-            String message =
-                    chatInput.getText().trim();
+        if (isKeepAlivePacket(packetClass)) {
+            return false;
+        }
 
-            if (!message.isEmpty()) {
-                screen.sendMessage(message);
-                chatInput.setText("");
+        if (delayedPacketTypes.contains(packetClass)) {
+            delayedPacketTypes.remove(packetClass);
+            return false;
+        }
+
+        delayedPacketTypes.add(packetClass);
+        return true;
+    }
+
+    /**
+     * Select every dynamically registered PLAY SERVERBOUND
+     * packet except keep-alive.
+     */
+    public static void delayAllPackets() {
+
+        delayedPacketTypes.clear();
+
+        List<Class<? extends IPacket<?>>> packetClasses =
+                getAllPacketClasses();
+
+        for (
+                Class<? extends IPacket<?>> packetClass
+                        : packetClasses
+        ) {
+
+            if (!isKeepAlivePacket(packetClass)) {
+                delayedPacketTypes.add(packetClass);
             }
+        }
+    }
+
+    /**
+     * Deselect every packet.
+     */
+    public static void clearDelayedPacketTypes() {
+        delayedPacketTypes.clear();
+    }
+
+    /*
+     * ------------------------------------------------------------
+     * Keep-alive protection
+     * ------------------------------------------------------------
+     */
+
+    /**
+     * Checks a packet class for keep-alive.
+     */
+    public static boolean isKeepAlivePacket(
+            Class<?> packetClass
+    ) {
+        return packetClass != null
+                && "CKeepAlivePacket".equals(
+                packetClass.getSimpleName()
+        );
+    }
+
+    /**
+     * Checks a packet name for keep-alive.
+     */
+    public static boolean isKeepAlivePacket(
+            String packetName
+    ) {
+        return "CKeepAlivePacket".equals(
+                packetName
+        );
+    }
+
+    /*
+     * ------------------------------------------------------------
+     * Packet identification
+     * ------------------------------------------------------------
+     */
+
+    public static String getPacketName(
+            IPacket<?> packet
+    ) {
+        if (packet == null) {
+            return "";
+        }
+
+        return packet.getClass()
+                .getSimpleName();
+    }
+
+    /**
+     * Returns whether this actual packet instance has been selected
+     * for delay.
+     */
+    public static boolean shouldDelayPacket(
+            IPacket<?> packet
+    ) {
+        if (packet == null) {
+            return false;
+        }
+
+        Class<?> packetClass =
+                packet.getClass();
+
+        /*
+         * Keep-alive always gets through.
+         */
+        if (isKeepAlivePacket(packetClass)) {
+            return false;
+        }
+
+        return delayedPacketTypes.contains(
+                packetClass
+        );
+    }
+
+    /*
+     * ------------------------------------------------------------
+     * Outgoing packet interception
+     * ------------------------------------------------------------
+     */
+
+    /**
+     * Handles a packet at a UI Utils interception point.
+     *
+     * @return true if UI Utils consumed the packet and the caller
+     *         must NOT send it normally.
+     */
+    public static boolean handleOutgoingPacket(
+            IPacket<?> packet,
+            NetworkManager networkManager
+    ) {
+        if (packet == null) {
+            return false;
+        }
+
+        /*
+         * Keep-alive is NEVER blocked or delayed.
+         */
+        if (
+                isKeepAlivePacket(
+                        packet.getClass()
+                )
+        ) {
+            return false;
+        }
+
+        /*
+         * Send Packets OFF:
+         *
+         * Only selected packet types are blocked.
+         */
+        if (
+                !sendPackets
+                        && shouldDelayPacket(packet)
+        ) {
+            return true;
+        }
+
+        /*
+         * Delay Packets ON:
+         *
+         * Only selected packet types are queued.
+         */
+        if (
+                delayPackets
+                        && shouldDelayPacket(packet)
+        ) {
+
+            delayedPackets.add(packet);
 
             return true;
         }
 
         /*
-         * The text field owns all other keyboard input while focused.
-         * This prevents keys like E from falling through to Screen.
+         * Packet wasn't consumed.
+         * Let the normal caller send it.
          */
-        chatInput.keyPressed(
-                keyCode,
-                scanCode,
-                modifiers
-        );
-
-        return true;
-    }
-
-    public static boolean charTyped(
-            Screen screen,
-            char codePoint,
-            int modifiers
-    ) {
-        if (chatInput == null
-                || !chatInput.isFocused()) {
-            return false;
-        }
-
-        return chatInput.charTyped(
-                codePoint,
-                modifiers
-        );
-    }
-
-    /*
-     * ------------------------------------------------------------
-     * Mouse handling
-     * ------------------------------------------------------------
-     */
-
-    public static boolean mouseClicked(
-            Screen screen,
-            double mouseX,
-            double mouseY,
-            int button
-    ) {
-        /*
-         * Chat input gets first priority.
-         */
-        if (chatInput != null) {
-            if (chatInput.mouseClicked(
-                    mouseX,
-                    mouseY,
-                    button
-            )) {
-                return true;
-            }
-        }
-
-        /*
-         * Only UI Utils left click is handled here.
-         */
-        if (button == 0
-                && screen instanceof ContainerScreen) {
-
-            int mx = (int) mouseX;
-            int my = (int) mouseY;
-
-            for (int i = 0;
-                 i < BUTTON_NAMES.length;
-                 ++i) {
-
-                if (isButtonHovered(
-                        mx,
-                        my,
-                        i
-                )) {
-                    handleButtonClick(
-                            screen,
-                            i
-                    );
-
-                    return true;
-                }
-            }
-        }
-
-        /*
-         * Clicking outside the chat field removes its focus.
-         */
-        if (chatInput != null
-                && chatInput.isFocused()) {
-
-            chatInput.setFocused(false);
-
-            if (screen.getFocused()
-                    == chatInput) {
-                screen.setFocused(null);
-            }
-        }
-
         return false;
     }
 
-    private static String getSendPacketsText() {
-        return "Send Packets: "
-                + (
-                UiUtilsPacketManager.isSendPacketsEnabled()
-                        ? "ON"
-                        : "OFF"
-        );
-    }
-
-    private static String getDelayPacketsText() {
-        return "Delay Packets: "
-                + (
-                UiUtilsPacketManager.isDelayPacketsEnabled()
-                        ? "ON"
-                        : "OFF"
+    /**
+     * Compatibility method for PlayerController's special
+     * interaction packets.
+     *
+     * Right now it uses the exact same selection logic as normal
+     * outgoing packets.
+     */
+    public static boolean handleSpecialOutgoingPacket(
+            IPacket<?> packet,
+            NetworkManager networkManager
+    ) {
+        return handleOutgoingPacket(
+                packet,
+                networkManager
         );
     }
 
     /*
      * ------------------------------------------------------------
-     * Rendering
+     * Queue management
      * ------------------------------------------------------------
      */
 
-    public static void render(
-            Screen screen,
-            FontRenderer font,
-            int mouseX,
-            int mouseY,
-            float partialTicks
+    /**
+     * Sends every queued packet in FIFO order.
+     */
+    public static void flush(
+            NetworkManager networkManager
     ) {
-        if (!shouldShow(screen)) {
+        if (networkManager == null) {
+            delayedPackets.clear();
+            return;
+        }
+
+        while (!delayedPackets.isEmpty()) {
+
+            IPacket<?> packet =
+                    delayedPackets.poll();
+
+            /*
+             * IMPORTANT:
+             *
+             * NetworkManager.sendPacket() may itself be hooked later.
+             * This direct path exists specifically so queue flushing
+             * does not immediately put the same packet back into the
+             * queue.
+             *
+             * For the current Eagler workspace, sendPacket() is still
+             * the transport entry point, so this remains the actual
+             * send call used by the workspace.
+             */
+            networkManager.sendPacket(packet);
+        }
+    }
+
+    /**
+     * Discards the current queue.
+     */
+    public static void clearQueue() {
+        delayedPackets.clear();
+    }
+
+    /*
+     * ------------------------------------------------------------
+     * Disconnect + Send
+     * ------------------------------------------------------------
+     */
+
+    public static void disconnectAndSend(
+            ClientPlayerEntity player
+    ) {
+
+        if (
+                player == null
+                        || player.connection == null
+        ) {
+            clearQueue();
+            return;
+        }
+
+        NetworkManager networkManager =
+                player.connection
+                        .getNetworkManager();
+
+        if (networkManager == null) {
+            clearQueue();
             return;
         }
 
         /*
-         * Container UI Utils.
+         * Send everything currently waiting.
          */
-        if (screen instanceof ContainerScreen) {
+        flush(networkManager);
 
-            int buttonsHeight =
-                    BUTTON_NAMES.length
-                            * BUTTON_STEP
-                            - BUTTON_GAP;
-
-            int chatHeight =
-                    CHAT_GAP
-                            + CHAT_LABEL_HEIGHT
-                            + CHAT_INPUT_HEIGHT;
-
-            int panelHeight =
-                    PANEL_Y
-                            + TITLE_HEIGHT
-                            + 4
-                            + buttonsHeight
-                            + chatHeight
-                            + STATUS_GAP
-                            + STATUS_HEIGHT;
-
-            /*
-             * Main panel.
-             */
-            screen.fill(
-                    PANEL_X,
-                    PANEL_Y,
-                    PANEL_X + PANEL_WIDTH,
-                    panelHeight,
-                    0xCC111111
-            );
-
-            /*
-             * Title.
-             */
-            String title =
-                    "UI Utils";
-
-            int titleWidth =
-                    font.getStringWidth(title);
-
-            screen.drawString(
-                    font,
-                    title,
-                    PANEL_X
-                            + (PANEL_WIDTH - titleWidth) / 2,
-                    PANEL_Y + 5,
-                    0xFFFFFF
-            );
-
-            /*
-             * Separator.
-             */
-            screen.fill(
-                    CONTROL_X,
-                    PANEL_Y + TITLE_HEIGHT,
-                    CONTROL_X + CONTROL_WIDTH,
-                    PANEL_Y + TITLE_HEIGHT + 1,
-                    0xFF444444
-            );
-
-            /*
-             * Buttons.
-             */
-            for (int i = 0;
-                 i < BUTTON_NAMES.length;
-                 ++i) {
-
-                String text =
-                        BUTTON_NAMES[i];
-
-                if (i == 2) {
-                    text = getSendPacketsText();
-                }
-
-                if (i == 3) {
-                    text = getDelayPacketsText();
-                }
-
-                drawButton(
-                        screen,
-                        font,
-                        text,
-                        CONTROL_X,
-                        getButtonY(i),
-                        CONTROL_WIDTH,
-                        BUTTON_HEIGHT,
-                        mouseX,
-                        mouseY
-                );
-            }
-
-            /*
-             * Chat label.
-             */
-            if (chatInput != null) {
-                screen.drawString(
-                        font,
-                        "Chat",
-                        CONTROL_X,
-                        chatInput.y - CHAT_LABEL_HEIGHT,
-                        0xAAAAAA
-                );
-            }
-
-            /*
-             * Status separator.
-             */
-            int statusY =
-                    panelHeight
-                            - STATUS_HEIGHT;
-
-            screen.fill(
-                    CONTROL_X,
-                    statusY - 3,
-                    CONTROL_X + CONTROL_WIDTH,
-                    statusY - 2,
-                    0xFF444444
-            );
-
-            /*
-             * Status line 1.
-             */
-            String sendState =
-                    "Send: "
-                            + (
-                            UiUtilsPacketManager
-                                    .isSendPacketsEnabled()
-                                    ? "ON"
-                                    : "OFF"
-                    );
-
-            String delayState =
-                    "Delay: "
-                            + (
-                            UiUtilsPacketManager
-                                    .isDelayPacketsEnabled()
-                                    ? "ON"
-                                    : "OFF"
-                    );
-
-            screen.drawString(
-                    font,
-                    sendState,
-                    CONTROL_X,
-                    statusY + 2,
-                    UiUtilsPacketManager
-                            .isSendPacketsEnabled()
-                            ? 0x55FF55
-                            : 0xFF5555
-            );
-
-            screen.drawString(
-                    font,
-                    delayState,
-                    CONTROL_X + 92,
-                    statusY + 2,
-                    UiUtilsPacketManager
-                            .isDelayPacketsEnabled()
-                            ? 0xFFFF55
-                            : 0xAAAAAA
-            );
-
-            /*
-             * Queue status.
-             */
-            screen.drawString(
-                    font,
-                    "Queued: "
-                            + UiUtilsPacketManager
-                            .getDelayedPacketCount(),
-                    CONTROL_X,
-                    statusY + 12,
-                    0xFFFFFF
-            );
-        }
+        clearQueue();
 
         /*
-         * ChatScreen gets only the small header.
+         * Disconnect after flushing.
          */
-        else if (screen instanceof ChatScreen) {
+        networkManager.closeChannel(
+                new StringTextComponent(
+                        "UI Utils: Disconnect + Send"
+                )
+        );
+    }
 
-            screen.fill(
-                    PANEL_X,
-                    PANEL_Y,
-                    PANEL_X + PANEL_WIDTH,
-                    PANEL_Y + 26,
-                    0xCC111111
-            );
+    /*
+     * ------------------------------------------------------------
+     * Search
+     * ------------------------------------------------------------
+     */
 
-            String title =
-                    "UI Utils";
-
-            int titleWidth =
-                    font.getStringWidth(title);
-
-            screen.drawString(
-                    font,
-                    title,
-                    PANEL_X
-                            + (PANEL_WIDTH - titleWidth) / 2,
-                    PANEL_Y + 7,
-                    0xFFFFFF
-            );
+    /**
+     * Used by the packet settings screen.
+     */
+    public static boolean packetMatchesSearch(
+            String packetName,
+            String search
+    ) {
+        if (
+                search == null
+                        || search.trim().isEmpty()
+        ) {
+            return true;
         }
+
+        return packetName
+                .toLowerCase()
+                .contains(
+                        search.trim()
+                                .toLowerCase()
+                );
     }
 }
