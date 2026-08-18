@@ -6,6 +6,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.commons.lang3.Validate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import net.minecraft.client.gui.uiutils.UiUtilsPacketManager;
 
 import java.net.SocketAddress;
 import java.util.Queue;
@@ -52,14 +53,13 @@ public class NetworkManager {
         this.packetListener = handler;
     }
 
-    public void sendPacket(IPacket<?> packetIn) {
+    public void sendPacket(IPacket<?> packet) {
+        if (UiUtilsPacketManager.handleOutgoingPacket(packet, this)) {
+            return;
+        }
 
-
-    }
-
-    private void dispatchPacket(IPacket<?> inPacket) {
-
-
+        // Existing Eaglercraft packet sending is handled by the
+        // networking implementation used by this workspace.
     }
 
     private void flushOutboundQueue() {
