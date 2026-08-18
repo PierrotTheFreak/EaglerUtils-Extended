@@ -16,6 +16,8 @@ import net.minecraft.network.status.server.SPongPacket;
 import net.minecraft.network.status.server.SServerInfoPacket;
 import org.apache.logging.log4j.LogManager;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -25,6 +27,7 @@ public enum ProtocolType {
             this.registerPacket(PacketDirection.SERVERBOUND, CHandshakePacket.class, CHandshakePacket::new);
         }
     },
+
     PLAY(0) {
         {
             this.registerPacket(PacketDirection.CLIENTBOUND, SSpawnObjectPacket.class, SSpawnObjectPacket::new);
@@ -120,6 +123,7 @@ public enum ProtocolType {
             this.registerPacket(PacketDirection.CLIENTBOUND, SUpdateRecipesPacket.class, SUpdateRecipesPacket::new);
             this.registerPacket(PacketDirection.CLIENTBOUND, STagsListPacket.class, STagsListPacket::new);
             this.registerPacket(PacketDirection.CLIENTBOUND, SPlayerDiggingPacket.class, SPlayerDiggingPacket::new);
+
             this.registerPacket(PacketDirection.SERVERBOUND, CConfirmTeleportPacket.class, CConfirmTeleportPacket::new);
             this.registerPacket(PacketDirection.SERVERBOUND, CQueryTileEntityNBTPacket.class, CQueryTileEntityNBTPacket::new);
             this.registerPacket(PacketDirection.SERVERBOUND, CSetDifficultyPacket.class, CSetDifficultyPacket::new);
@@ -168,6 +172,7 @@ public enum ProtocolType {
             this.registerPacket(PacketDirection.SERVERBOUND, CPlayerTryUseItemPacket.class, CPlayerTryUseItemPacket::new);
         }
     },
+
     STATUS(1) {
         {
             this.registerPacket(PacketDirection.SERVERBOUND, CServerQueryPacket.class, CServerQueryPacket::new);
@@ -176,6 +181,7 @@ public enum ProtocolType {
             this.registerPacket(PacketDirection.CLIENTBOUND, SPongPacket.class, SPongPacket::new);
         }
     },
+
     LOGIN(2) {
         {
             this.registerPacket(PacketDirection.CLIENTBOUND, SDisconnectLoginPacket.class, SDisconnectLoginPacket::new);
@@ -189,52 +195,121 @@ public enum ProtocolType {
         }
     };
 
-    private static final ProtocolType[] STATES_BY_ID = new ProtocolType[4];
-    private static final Map<Class<? extends IPacket<?>>, ProtocolType> STATES_BY_CLASS = Maps.newHashMap();
+    private static final ProtocolType[] STATES_BY_ID =
+            new ProtocolType[4];
+
+    private static final Map<Class<? extends IPacket<?>>, ProtocolType> STATES_BY_CLASS =
+            Maps.newHashMap();
+
     private final int id;
-    private final Map<PacketDirection, BiMap<Integer, Class<? extends IPacket<?>>>> directionMaps = Maps.newEnumMap(PacketDirection.class);
-    private final Map<PacketDirection, Map<Integer, Supplier<IPacket<?>>>> supplierMaps = Maps.newEnumMap(PacketDirection.class);
+
+    private final Map<PacketDirection, BiMap<Integer, Class<? extends IPacket<?>>>> directionMaps =
+            Maps.newEnumMap(PacketDirection.class);
+
+    private final Map<PacketDirection, Map<Integer, Supplier<IPacket<?>>>> supplierMaps =
+            Maps.newEnumMap(PacketDirection.class);
 
     private ProtocolType(int protocolId) {
         this.id = protocolId;
     }
 
-    protected ProtocolType registerPacket(PacketDirection direction, Class<? extends IPacket<?>> packetClass, Supplier<IPacket<?>> factory) {
-        BiMap<Integer, Class<? extends IPacket<?>>> bimap = this.directionMaps.get(direction);
+    protected ProtocolType registerPacket(
+            PacketDirection direction,
+            Class<? extends IPacket<?>> packetClass,
+            Supplier<IPacket<?>> factory
+    ) {
+        BiMap<Integer, Class<? extends IPacket<?>>> bimap =
+                this.directionMaps.get(direction);
+
         if (bimap == null) {
             bimap = HashBiMap.create();
             this.directionMaps.put(direction, bimap);
         }
 
         if (bimap.containsValue(packetClass)) {
-            String s = direction + " packet " + packetClass + " is already known to ID " + bimap.inverse().get(packetClass);
+            String s =
+                    direction
+                            + " packet "
+                            + packetClass
+                            + " is already known to ID "
+                            + bimap.inverse().get(packetClass);
+
             LogManager.getLogger().fatal(s);
+
             throw new IllegalArgumentException(s);
         } else {
             int id = bimap.size();
+
             bimap.put(id, packetClass);
-            Map<Integer, Supplier<IPacket<?>>> suppliers = this.supplierMaps.get(direction);
+
+            Map<Integer, Supplier<IPacket<?>>> suppliers =
+                    this.supplierMaps.get(direction);
+
             if (suppliers == null) {
                 suppliers = Maps.newHashMap();
-                this.supplierMaps.put(direction, suppliers);
+                this.supplierMaps.put(
+                        direction,
+                        suppliers
+                );
             }
+
             suppliers.put(id, factory);
+
             return this;
         }
     }
 
-    public Integer getPacketId(PacketDirection direction, IPacket<?> packetIn) throws Exception {
-        return this.directionMaps.get(direction).inverse().get(packetIn.getClass());
+    /*
+     * NEW:
+     *
+     * Returns a copy of the packet classes registered for the
+     * requested protocol direction.
+     *
+     * This is the source of truth for UI Utils instead of a
+     * hard-coded packet list.
+     */
+    public List<Class<? extends IPacket<?>>> getPacketClasses(
+            PacketDirection direction
+    ) {
+        BiMap<Integer, Class<? extends IPacket<?>>> map =
+                this.directionMaps.get(direction);
+
+        if (map == null || map.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return new ArrayList<>(
+                map.values()
+        );
     }
 
+    public Integer getPacketId(
+            PacketDirection direction,
+            IPacket<?> packetIn
+    ) throws Exception {
+        return this.directionMaps
+                .get(direction)
+                .inverse()
+                .get(packetIn.getClass());
+    }
 
-    public IPacket<?> getPacket(PacketDirection direction, int packetId) {
-        Map<Integer, Supplier<IPacket<?>>> suppliers = this.supplierMaps.get(direction);
+    public IPacket<?> getPacket(
+            PacketDirection direction,
+            int packetId
+    ) {
+        Map<Integer, Supplier<IPacket<?>>> suppliers =
+                this.supplierMaps.get(direction);
+
         if (suppliers == null) {
             return null;
         }
-        Supplier<IPacket<?>> supplier = suppliers.get(packetId);
-        return supplier == null ? null : supplier.get();
+
+        Supplier<IPacket<?>> supplier =
+                suppliers.get(packetId);
+
+        return supplier == null
+                ? null
+                : supplier.get();
     }
 
     public int getId() {
@@ -242,32 +317,64 @@ public enum ProtocolType {
     }
 
     public static ProtocolType getById(int stateId) {
-        return stateId >= -1 && stateId <= 2 ? STATES_BY_ID[stateId - -1] : null;
+        return stateId >= -1 && stateId <= 2
+                ? STATES_BY_ID[stateId - -1]
+                : null;
     }
 
-    public static ProtocolType getFromPacket(IPacket<?> packetIn) {
-        return STATES_BY_CLASS.get(packetIn.getClass());
+    public static ProtocolType getFromPacket(
+            IPacket<?> packetIn
+    ) {
+        return STATES_BY_CLASS.get(
+                packetIn.getClass()
+        );
     }
 
     static {
         for (ProtocolType protocoltype : values()) {
             int i = protocoltype.getId();
+
             if (i < -1 || i > 2) {
-                throw new Error("Invalid protocol ID " + Integer.toString(i));
+                throw new Error(
+                        "Invalid protocol ID "
+                                + Integer.toString(i)
+                );
             }
 
-            STATES_BY_ID[i - -1] = protocoltype;
+            STATES_BY_ID[i - -1] =
+                    protocoltype;
 
-            for (PacketDirection packetdirection : protocoltype.directionMaps.keySet()) {
-                for (Class<? extends IPacket<?>> oclass : protocoltype.directionMaps.get(packetdirection).values()) {
-                    if (STATES_BY_CLASS.containsKey(oclass) && STATES_BY_CLASS.get(oclass) != protocoltype) {
-                        throw new Error("Packet " + oclass + " is already assigned to protocol " + STATES_BY_CLASS.get(oclass) + " - can't reassign to " + protocoltype);
+            for (
+                    PacketDirection packetdirection
+                            : protocoltype.directionMaps.keySet()
+            ) {
+                for (
+                        Class<? extends IPacket<?>> oclass
+                                : protocoltype.directionMaps
+                                .get(packetdirection)
+                                .values()
+                ) {
+                    if (
+                            STATES_BY_CLASS.containsKey(oclass)
+                                    && STATES_BY_CLASS.get(oclass)
+                                    != protocoltype
+                    ) {
+                        throw new Error(
+                                "Packet "
+                                        + oclass
+                                        + " is already assigned to protocol "
+                                        + STATES_BY_CLASS.get(oclass)
+                                        + " - can't reassign to "
+                                        + protocoltype
+                        );
                     }
 
-                    STATES_BY_CLASS.put(oclass, protocoltype);
+                    STATES_BY_CLASS.put(
+                            oclass,
+                            protocoltype
+                    );
                 }
             }
         }
-
     }
 }
