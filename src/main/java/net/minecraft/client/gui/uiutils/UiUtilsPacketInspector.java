@@ -34,24 +34,17 @@ public final class UiUtilsPacketInspector {
 
     public static synchronized void record(IPacket<?> packet, PacketDirection direction) {
         if (!enabled || paused || packet == null) return;
-        int size = estimateSize(packet);
-        ENTRIES.addFirst(new Entry(UiUtilsPacketManager.getPacketName(packet), direction, size));
+        Entry entry = new Entry(UiUtilsPacketManager.getPacketName(packet), direction, estimateSize(packet));
+        ENTRIES.addFirst(entry);
+        UiUtilsPacketLogger.append(entry);
         while (ENTRIES.size() > MAX_ENTRIES) ENTRIES.removeLast();
     }
 
     private static int estimateSize(IPacket<?> packet) {
-        try {
-            String text = String.valueOf(packet);
-            return text.length();
-        } catch (Throwable ignored) {
-            return 0;
-        }
+        try { return String.valueOf(packet).length(); } catch (Throwable ignored) { return 0; }
     }
 
-    public static synchronized List<Entry> getEntries() {
-        return new ArrayList<>(ENTRIES);
-    }
-
+    public static synchronized List<Entry> getEntries() { return new ArrayList<>(ENTRIES); }
     public static synchronized void clear() { ENTRIES.clear(); }
     public static boolean isEnabled() { return enabled; }
     public static void setEnabled(boolean value) { enabled = value; }
