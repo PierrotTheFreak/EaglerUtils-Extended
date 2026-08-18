@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       # ============================================================
       # CHECKOUT
       # ============================================================
@@ -56,6 +57,8 @@ jobs:
 
           mkdir -p target_teavm_wasm_gc/javascript_dist
           mkdir -p reports
+          mkdir -p Extras/artifacts
+          mkdir -p Extras/errors
 
           echo
           echo "Repository root:"
@@ -76,31 +79,36 @@ jobs:
       # ============================================================
       # COMPILE BOOTSTRAP.JS
       #
-      # This is the Linux equivalent of:
-      #
-      #   compilebootstrapjs.bat
-      #
-      # and uses the exact command from:
+      # Equivalent to:
       #
       #   compilebootstrapjs.sh
+      #
+      # Uses:
+      #
+      #   java -jar buildtools/closure-compiler.jar
       # ============================================================
 
       - name: Compile WASM GC bootstrap.js
+        id: bootstrap_build
         shell: bash
         run: |
-          set -e
+          set +e
+
+          mkdir -p reports
+
+          BOOTSTRAP_LOG="reports/bootstrap-build.log"
 
           echo "========================================"
           echo "Compile WASM GC Bootstrap JS"
           echo "========================================"
 
-          SRC_FOLDER="../src/wasm-gc-teavm-bootstrap/js"
-          COMPILER="buildtools/closure-compiler.jar"
-          OUTPUT_FILE="javascript_dist/bootstrap.js"
-
           echo
           echo "Current directory:"
           pwd
+
+          SRC_FOLDER="../src/wasm-gc-teavm-bootstrap/js"
+          COMPILER="buildtools/closure-compiler.jar"
+          OUTPUT_FILE="javascript_dist/bootstrap.js"
 
           echo
           echo "Source folder:"
@@ -114,51 +122,85 @@ jobs:
           echo "Output:"
           echo "$OUTPUT_FILE"
 
-          # The upstream script expects to be executed from:
-          # target_teavm_wasm_gc
-          #
-          # Move into that directory so the paths match the
-          # original compilebootstrapjs.sh exactly.
+          {
+            echo "========================================"
+            echo "WASM GC Bootstrap Build"
+            echo "========================================"
+            echo
+            echo "Repository: $GITHUB_REPOSITORY"
+            echo "Commit:     $GITHUB_SHA"
+            echo "Branch:     $GITHUB_REF_NAME"
+            echo "Run ID:     $GITHUB_RUN_ID"
+            echo "Started:    $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            echo
+          } > "$BOOTSTRAP_LOG"
+
+          # --------------------------------------------------------
+          # Move into target_teavm_wasm_gc
+          # --------------------------------------------------------
 
           cd target_teavm_wasm_gc
 
-          echo
           echo "Changed directory to:"
           pwd
 
-          echo
-          echo "Checking required files..."
+          {
+            echo "Working directory:"
+            pwd
+            echo
+          } >> "../$BOOTSTRAP_LOG"
+
+          # --------------------------------------------------------
+          # Verify Closure Compiler
+          # --------------------------------------------------------
 
           if [ ! -f "$COMPILER" ]; then
-            echo
-            echo "ERROR: Closure Compiler was not found."
-            echo
-            echo "Expected:"
-            echo "$(pwd)/$COMPILER"
-            echo
-            echo "Files matching closure compiler:"
-            find .. \
-              -type f \
-              \( -iname "*closure*compiler*.jar" -o -iname "closure-compiler.jar" \) \
-              -print || true
+
+            {
+              echo "ERROR: Closure Compiler was not found."
+              echo
+              echo "Expected:"
+              echo "$(pwd)/$COMPILER"
+              echo
+              echo "Files matching closure compiler:"
+              find .. \
+                -type f \
+                \( -iname "*closure*compiler*.jar" -o -iname "closure-compiler.jar" \) \
+                -print || true
+            } | tee -a "../$BOOTSTRAP_LOG"
+
             exit 1
           fi
+
+          # --------------------------------------------------------
+          # Verify externs.js
+          # --------------------------------------------------------
 
           if [ ! -f "$SRC_FOLDER/externs.js" ]; then
-            echo
-            echo "ERROR: externs.js was not found."
-            echo
-            echo "Expected:"
-            echo "$(pwd)/$SRC_FOLDER/externs.js"
+
+            {
+              echo "ERROR: externs.js was not found."
+              echo
+              echo "Expected:"
+              echo "$(pwd)/$SRC_FOLDER/externs.js"
+            } | tee -a "../$BOOTSTRAP_LOG"
+
             exit 1
           fi
 
+          # --------------------------------------------------------
+          # Verify main.js
+          # --------------------------------------------------------
+
           if [ ! -f "$SRC_FOLDER/main.js" ]; then
-            echo
-            echo "ERROR: main.js was not found."
-            echo
-            echo "Expected:"
-            echo "$(pwd)/$SRC_FOLDER/main.js"
+
+            {
+              echo "ERROR: main.js was not found."
+              echo
+              echo "Expected:"
+              echo "$(pwd)/$SRC_FOLDER/main.js"
+            } | tee -a "../$BOOTSTRAP_LOG"
+
             exit 1
           fi
 
@@ -173,6 +215,10 @@ jobs:
           echo "Closure Compiler:"
           ls -lh "$COMPILER"
 
+          # --------------------------------------------------------
+          # Run Closure Compiler
+          # --------------------------------------------------------
+
           echo
           echo "========================================"
           echo "Running Closure Compiler"
@@ -185,49 +231,112 @@ jobs:
             --isolation_mode IIFE \
             --js "$SRC_FOLDER/externs.js" \
             "$SRC_FOLDER/main.js" \
-            --js_output_file "$OUTPUT_FILE"
+            --js_output_file "$OUTPUT_FILE" \
+            2>&1 | tee -a "../$BOOTSTRAP_LOG"
 
-          echo
-          echo "========================================"
-          echo "Bootstrap compilation finished"
-          echo "========================================"
+          BOOTSTRAP_EXIT=${PIPESTATUS[0]}
+
+          # --------------------------------------------------------
+          # Check result
+          # --------------------------------------------------------
+
+          if [ "$BOOTSTRAP_EXIT" -ne 0 ]; then
+
+            {
+              echo
+              echo "========================================"
+              echo "BOOTSTRAP BUILD FAILED"
+              echo "========================================"
+              echo
+              echo "Exit code: $BOOTSTRAP_EXIT"
+            } | tee -a "../$BOOTSTRAP_LOG"
+
+            exit "$BOOTSTRAP_EXIT"
+          fi
+
+          # --------------------------------------------------------
+          # Verify output
+          # --------------------------------------------------------
 
           if [ ! -f "$OUTPUT_FILE" ]; then
-            echo
-            echo "ERROR: bootstrap.js was not created."
-            echo
-            echo "Expected:"
-            echo "$(pwd)/$OUTPUT_FILE"
-            echo
-            echo "Contents of javascript_dist:"
-            ls -lah javascript_dist || true
+
+            {
+              echo
+              echo "ERROR: bootstrap.js was not created."
+              echo
+              echo "Expected:"
+              echo "$(pwd)/$OUTPUT_FILE"
+              echo
+              echo "Contents of javascript_dist:"
+              ls -lah javascript_dist || true
+            } | tee -a "../$BOOTSTRAP_LOG"
+
             exit 1
           fi
 
-          echo
-          echo "Generated bootstrap.js:"
-          ls -lh "$OUTPUT_FILE"
+          {
+            echo
+            echo "========================================"
+            echo "BOOTSTRAP BUILD SUCCESSFUL"
+            echo "========================================"
+            echo
+            echo "Generated bootstrap.js:"
+            ls -lh "$OUTPUT_FILE"
+            echo
+            echo "Bootstrap.js size:"
+            wc -c "$OUTPUT_FILE"
+          } | tee -a "../$BOOTSTRAP_LOG"
 
-          echo
-          echo "Bootstrap.js size:"
-          wc -c "$OUTPUT_FILE"
+          exit 0
 
       # ============================================================
-      # VERIFY BUILD INPUTS
+      # VERIFY BOOTSTRAP RESULT
+      # ============================================================
+
+      - name: Verify bootstrap build
+        if: always()
+        shell: bash
+        run: |
+          echo "========================================"
+          echo "BOOTSTRAP BUILD VERIFICATION"
+          echo "========================================"
+
+          if [ -f "target_teavm_wasm_gc/javascript_dist/bootstrap.js" ]; then
+            echo
+            echo "bootstrap.js exists:"
+            ls -lh target_teavm_wasm_gc/javascript_dist/bootstrap.js
+          else
+            echo
+            echo "bootstrap.js is missing."
+          fi
+
+          echo
+          echo "Current WASM distribution:"
+          find target_teavm_wasm_gc/javascript_dist \
+            -maxdepth 1 \
+            -type f \
+            -printf '%f (%s bytes)\n' \
+            | sort || true
+
+      # ============================================================
+      # VERIFY WASM BUILD INPUTS
       # ============================================================
 
       - name: Verify WASM build inputs
+        if: always()
         shell: bash
         run: |
-          set -e
-
           echo "========================================"
           echo "WASM BUILD INPUT VERIFICATION"
           echo "========================================"
 
           echo
           echo "Required bootstrap.js:"
-          ls -lh target_teavm_wasm_gc/javascript_dist/bootstrap.js
+          if [ -f "target_teavm_wasm_gc/javascript_dist/bootstrap.js" ]; then
+            ls -lh target_teavm_wasm_gc/javascript_dist/bootstrap.js
+          else
+            echo "MISSING"
+          fi
 
           echo
           echo "WASM JavaScript directory:"
@@ -247,10 +356,14 @@ jobs:
 
           echo
           echo "Bootstrap.js verification:"
-          file target_teavm_wasm_gc/javascript_dist/bootstrap.js
+          if [ -f "target_teavm_wasm_gc/javascript_dist/bootstrap.js" ]; then
+            file target_teavm_wasm_gc/javascript_dist/bootstrap.js
+          else
+            echo "bootstrap.js does not exist."
+          fi
 
       # ============================================================
-      # BUILD
+      # BUILD FULL WASM CLIENT
       # ============================================================
 
       - name: Build full WASM client
@@ -262,6 +375,7 @@ jobs:
           # Always create a completely fresh report.
           rm -f reports/report.txt
           rm -f reports/build.log
+
           mkdir -p reports
 
           REPORT="reports/report.txt"
@@ -502,7 +616,172 @@ jobs:
           exit "$BUILD_EXIT"
 
       # ============================================================
+      # COPY BUILD RESULTS INTO REPOSITORY
+      #
+      # WASM FILES:
+      #
+      #   Extras/artifacts/
+      #
+      # REPORTS:
+      #
+      #   Extras/errors/
+      #
+      # This runs even if the build failed.
+      # ============================================================
+
+      - name: Prepare repository artifacts and error reports
+        if: always()
+        shell: bash
+        run: |
+          set -e
+
+          echo "========================================"
+          echo "Preparing repository build output"
+          echo "========================================"
+
+          mkdir -p Extras/artifacts
+          mkdir -p Extras/errors
+
+          # ========================================================
+          # CLEAN OLD REPOSITORY OUTPUT
+          # ========================================================
+
+          echo
+          echo "Cleaning previous repository artifacts..."
+
+          rm -rf Extras/artifacts/*
+          rm -rf Extras/errors/*
+
+          # ========================================================
+          # COPY WASM ARTIFACTS
+          # ========================================================
+
+          echo
+          echo "Copying WASM artifacts..."
+
+          if [ -d "target_teavm_wasm_gc/javascript_dist" ]; then
+
+            cp -a \
+              target_teavm_wasm_gc/javascript_dist/. \
+              Extras/artifacts/
+
+            echo
+            echo "Copied artifacts:"
+
+            find Extras/artifacts \
+              -type f \
+              -printf '%p (%s bytes)\n' \
+              | sort
+
+          else
+
+            echo "No WASM output directory was created." \
+              > Extras/artifacts/BUILD_FAILED.txt
+
+          fi
+
+          # ========================================================
+          # COPY REPORTS
+          # ========================================================
+
+          echo
+          echo "Copying reports..."
+
+          if [ -d "reports" ]; then
+
+            cp -a \
+              reports/. \
+              Extras/errors/
+
+          else
+
+            echo "No reports directory was generated." \
+              > Extras/errors/report.txt
+
+          fi
+
+          # ========================================================
+          # GUARANTEE REPORT EXISTS
+          # ========================================================
+
+          if [ ! -f "Extras/errors/report.txt" ]; then
+
+            {
+              echo "========================================"
+              echo "Eaglercraft WASM Build Report"
+              echo "========================================"
+              echo
+              echo "WARNING: The main build report was not generated."
+              echo
+              echo "Repository: $GITHUB_REPOSITORY"
+              echo "Commit:     $GITHUB_SHA"
+              echo "Branch:     $GITHUB_REF_NAME"
+              echo "Run ID:     $GITHUB_RUN_ID"
+              echo "Time:       $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+              echo
+              echo "This usually means the workflow failed before"
+              echo "the Gradle reporting stage was reached."
+            } > Extras/errors/report.txt
+
+          fi
+
+          # ========================================================
+          # REPOSITORY BUILD INFORMATION
+          # ========================================================
+
+          {
+            echo "========================================"
+            echo "Repository Build Output"
+            echo "========================================"
+            echo
+            echo "Repository: $GITHUB_REPOSITORY"
+            echo "Commit:     $GITHUB_SHA"
+            echo "Branch:     $GITHUB_REF_NAME"
+            echo "Run ID:     $GITHUB_RUN_ID"
+            echo "Runner OS:  $RUNNER_OS"
+            echo "Finished:   $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            echo
+            echo "========================================"
+            echo "WASM ARTIFACTS"
+            echo "========================================"
+            echo
+
+            find Extras/artifacts \
+              -type f \
+              -printf '%p (%s bytes)\n' \
+              | sort || true
+
+            echo
+            echo "========================================"
+            echo "ERROR / REPORT FILES"
+            echo "========================================"
+            echo
+
+            find Extras/errors \
+              -type f \
+              -printf '%p (%s bytes)\n' \
+              | sort || true
+
+          } > Extras/errors/repository-build-info.txt
+
+          # ========================================================
+          # DISPLAY FINAL STRUCTURE
+          # ========================================================
+
+          echo
+          echo "========================================"
+          echo "FINAL Extras DIRECTORY"
+          echo "========================================"
+
+          find Extras \
+            -type f \
+            -printf '%p (%s bytes)\n' \
+            | sort
+
+      # ============================================================
       # UPLOAD WASM ARTIFACTS
+      #
+      # These are ALSO uploaded as GitHub Actions artifacts.
       # ============================================================
 
       - name: Upload WASM build artifacts
@@ -524,7 +803,7 @@ jobs:
         with:
           name: eaglercraft-build-diagnostics-${{ github.sha }}
           path: reports/
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 30
 
       # ============================================================
@@ -545,16 +824,27 @@ jobs:
             echo "- Branch: \`$GITHUB_REF_NAME\`"
             echo "- Run ID: \`$GITHUB_RUN_ID\`"
             echo
+            echo "## Repository Output"
+            echo
+            echo "Generated files are committed to:"
+            echo
+            echo "- \`Extras/artifacts/\`"
+            echo "- \`Extras/errors/\`"
+            echo
             echo "## Generated Files"
             echo
 
             if [ -d "target_teavm_wasm_gc/javascript_dist" ]; then
+
               find target_teavm_wasm_gc/javascript_dist \
                 -type f \
                 -printf '%p (%s bytes)\n' \
                 | sort
+
             else
+
               echo "No output directory."
+
             fi
 
             echo
@@ -562,43 +852,68 @@ jobs:
             echo
 
             if [ -f "target_teavm_wasm_gc/javascript_dist/bootstrap.js" ]; then
+
               echo "✅ \`bootstrap.js\` exists."
               echo
               ls -lh target_teavm_wasm_gc/javascript_dist/bootstrap.js
+
             else
+
               echo "❌ \`bootstrap.js\` is missing."
+
             fi
+
+            echo
+            echo "## Repository Extras"
+            echo
+
+            find Extras \
+              -type f \
+              -printf '%p (%s bytes)\n' \
+              | sort || true
 
             echo
             echo "## Diagnostics"
             echo
-            echo "Full logs are available in the uploaded diagnostic artifact."
+            echo "Full logs are available in \`Extras/errors/\`"
+            echo "and as the uploaded diagnostic artifact."
+
           } >> "$GITHUB_STEP_SUMMARY"
 
       # ============================================================
-      # COMMIT GENERATED OUTPUT BACK TO REPOSITORY
+      # COMMIT EVERYTHING TO REPOSITORY
       #
-      # This runs even if the Gradle build failed.
-      # That means partial/generated files such as bootstrap.js,
-      # assets.epw, favicon.png, etc. can be committed.
+      # This runs even if the build failed.
+      #
+      # Result:
+      #
+      #   Extras/artifacts/
+      #   Extras/errors/
+      #
+      # are committed and pushed.
       # ============================================================
 
-      - name: Commit generated WASM files to repository
+      - name: Commit generated WASM files and reports
         if: always()
         shell: bash
         run: |
           set -e
 
           echo "========================================"
-          echo "Commit generated WASM files"
+          echo "Commit generated WASM files and reports"
           echo "========================================"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+          # ========================================================
+          # DISPLAY OUTPUT
+          # ========================================================
+
           echo
-          echo "Generated files:"
-          find target_teavm_wasm_gc/javascript_dist \
+          echo "Repository output:"
+
+          find Extras \
             -type f \
             -printf '%p (%s bytes)\n' \
             | sort || true
@@ -607,24 +922,56 @@ jobs:
           echo "Git status before adding:"
           git status --short
 
-          # Add the generated distribution.
-          git add target_teavm_wasm_gc/javascript_dist/
+          # ========================================================
+          # ADD EVERYTHING UNDER EXTRAS
+          #
+          # -A includes deletions.
+          # -f bypasses .gitignore.
+          # ========================================================
+
+          git add -A -f Extras/artifacts Extras/errors
 
           echo
           echo "Git status after adding:"
           git status --short
 
-          # Don't create empty commits.
+          # ========================================================
+          # CHECK FOR CHANGES
+          # ========================================================
+
           if git diff --cached --quiet; then
+
             echo
-            echo "No generated files changed."
+            echo "No repository output changed."
             exit 0
+
           fi
+
+          # ========================================================
+          # COMMIT
+          # ========================================================
+
+          echo
+          echo "Creating commit..."
 
           git commit \
             -m "Build WASM client [skip ci]"
 
+          # ========================================================
+          # PUSH
+          # ========================================================
+
           echo
-          echo "Pushing generated WASM files..."
+          echo "Pushing generated WASM files and reports..."
 
           git push origin "HEAD:$GITHUB_REF_NAME"
+
+          echo
+          echo "========================================"
+          echo "PUSH SUCCESSFUL"
+          echo "========================================"
+
+          echo
+          echo "Committed directories:"
+          echo "  Extras/artifacts/"
+          echo "  Extras/errors/"
