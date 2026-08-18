@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.uiutils.UiUtilsMacroKeyBinding;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.InputMappings;
 import net.minecraft.util.Util;
@@ -38,8 +39,10 @@ public class KeyBinding implements Comparable<KeyBinding> {
       KeyBinding keybinding = HASH.get(key);
       if (keybinding != null) {
          ++keybinding.pressTime;
+         if (keybinding == UiUtilsMacroKeyBinding.KEY_BINDING) {
+            UiUtilsMacroKeyBinding.onPressed();
+         }
       }
-
    }
 
    public static void setKeyBindState(InputMappings.Input key, boolean held) {
@@ -47,32 +50,27 @@ public class KeyBinding implements Comparable<KeyBinding> {
       if (keybinding != null) {
          keybinding.pressed = held;
       }
-
    }
 
    public static void updateKeyBindState() {
       for(KeyBinding keybinding : KEYBIND_ARRAY.values()) {
          if (keybinding.keyCode.getType() == InputMappings.Type.KEYSYM && keybinding.keyCode.getKeyCode() != InputMappings.INPUT_INVALID.getKeyCode()) {
-            keybinding.pressed = InputMappings.isKeyDown( keybinding.keyCode.getKeyCode());
+            keybinding.pressed = InputMappings.isKeyDown(keybinding.keyCode.getKeyCode());
          }
       }
-
    }
 
    public static void unPressAllKeys() {
       for(KeyBinding keybinding : KEYBIND_ARRAY.values()) {
          keybinding.unpressKey();
       }
-
    }
 
    public static void resetKeyBindingArrayAndHash() {
       HASH.clear();
-
       for(KeyBinding keybinding : KEYBIND_ARRAY.values()) {
          HASH.put(keybinding.keyCode, keybinding);
       }
-
    }
 
    public KeyBinding(String description, int keyCode, String category) {
@@ -89,13 +87,8 @@ public class KeyBinding implements Comparable<KeyBinding> {
       KEYBIND_SET.add(category);
    }
 
-   public boolean isKeyDown() {
-      return this.pressed;
-   }
-
-   public String getKeyCategory() {
-      return this.keyCategory;
-   }
+   public boolean isKeyDown() { return this.pressed; }
+   public String getKeyCategory() { return this.keyCategory; }
 
    public boolean isPressed() {
       if (this.pressTime == 0) {
@@ -111,17 +104,9 @@ public class KeyBinding implements Comparable<KeyBinding> {
       this.pressed = false;
    }
 
-   public String getKeyDescription() {
-      return this.keyDescription;
-   }
-
-   public InputMappings.Input getDefault() {
-      return this.keyCodeDefault;
-   }
-
-   public void bind(InputMappings.Input key) {
-      this.keyCode = key;
-   }
+   public String getKeyDescription() { return this.keyDescription; }
+   public InputMappings.Input getDefault() { return this.keyCodeDefault; }
+   public void bind(InputMappings.Input key) { this.keyCode = key; }
 
    public int compareTo(KeyBinding p_compareTo_1_) {
       return this.keyCategory.equals(p_compareTo_1_.keyCategory) ? I18n.format(this.keyDescription).compareTo(I18n.format(p_compareTo_1_.keyDescription)) : CATEGORY_ORDER.get(this.keyCategory).compareTo(CATEGORY_ORDER.get(p_compareTo_1_.keyCategory));
@@ -129,18 +114,11 @@ public class KeyBinding implements Comparable<KeyBinding> {
 
    public static Supplier<String> getDisplayString(String key) {
       KeyBinding keybinding = KEYBIND_ARRAY.get(key);
-      return keybinding == null ? () -> {
-         return key;
-      } : keybinding::getLocalizedName;
+      return keybinding == null ? () -> key : keybinding::getLocalizedName;
    }
 
-   public boolean conflicts(KeyBinding binding) {
-      return this.keyCode.equals(binding.keyCode);
-   }
-
-   public boolean isInvalid() {
-      return this.keyCode.equals(InputMappings.INPUT_INVALID);
-   }
+   public boolean conflicts(KeyBinding binding) { return this.keyCode.equals(binding.keyCode); }
+   public boolean isInvalid() { return this.keyCode.equals(InputMappings.INPUT_INVALID); }
 
    public boolean matchesKey(int keysym, int scancode) {
       if (keysym == InputMappings.INPUT_INVALID.getKeyCode()) {
@@ -150,9 +128,7 @@ public class KeyBinding implements Comparable<KeyBinding> {
       }
    }
 
-   public boolean matchesMouseKey(int key) {
-      return this.keyCode.getType() == InputMappings.Type.MOUSE && this.keyCode.getKeyCode() == key;
-   }
+   public boolean matchesMouseKey(int key) { return this.keyCode.getType() == InputMappings.Type.MOUSE && this.keyCode.getKeyCode() == key; }
 
    public String getLocalizedName() {
       String s = this.keyCode.getTranslationKey();
@@ -169,15 +145,9 @@ public class KeyBinding implements Comparable<KeyBinding> {
          String s2 = I18n.format(s);
          s1 = Objects.equals(s2, s) ? I18n.format(InputMappings.Type.MOUSE.func_216500_a(), i + 1) : s2;
       }
-
       return s1 == null ? I18n.format(s) : s1;
    }
 
-   public boolean isDefault() {
-      return this.keyCode.equals(this.keyCodeDefault);
-   }
-
-   public String getTranslationKey() {
-      return this.keyCode.getTranslationKey();
-   }
+   public boolean isDefault() { return this.keyCode.equals(this.keyCodeDefault); }
+   public String getTranslationKey() { return this.keyCode.getTranslationKey(); }
 }
