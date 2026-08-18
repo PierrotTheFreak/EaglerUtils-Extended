@@ -3,12 +3,12 @@ Eaglercraft WASM Build Report
 ========================================
 
 Repository: PierrotTheFreak/EaglerUtils-Extended
-Commit:     96b38994e987604f87f97ef9be81672068747e07
+Commit:     65536c56cf98086d382e61149280fc1ef1b9f09f
 Branch:     main
-Run ID:     32181744985
+Run ID:     32183355882
 Runner OS:  Linux
-Runner:     GitHub Actions 1000008665
-Started:    2026-08-18 20:23:14 UTC
+Runner:     GitHub Actions 1000008686
+Started:    2026-08-18 20:39:58 UTC
 
 Build task:
   ./gradlew makeMainWasmClientBundle
@@ -72,7 +72,7 @@ tmpfs           1.6G   12K  1.6G   1% /run/user/1001
 
 Memory:
                total        used        free      shared  buff/cache   available
-Mem:            15Gi       1.3Gi        10Gi        47Mi       4.2Gi        14Gi
+Mem:            15Gi       1.4Gi        10Gi        47Mi       4.2Gi        14Gi
 Swap:          3.0Gi          0B       3.0Gi
 
 Working directory:
@@ -99,101 +99,6 @@ Gradle exit code:
 
 Last 300 lines of Gradle output:
 ----------------------------------------
-
-> Configure project :target_teavm_wasm_gc
-Evaluating project ':target_teavm_wasm_gc' using build file '/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/target_teavm_wasm_gc/build.gradle.kts'.
-Resolved plugin [id: 'java']
-Resolved plugin [id: 'org.teavm', version: '0.12.1-EAGLER-R3']
-Resolved plugin [id: 'com.resentclient.oss.eaglercraft.build', version: '0.0.0']
-All projects evaluated.
-Task name matched 'makeMainWasmClientBundle'
-Selected primary task 'makeMainWasmClientBundle' from project :
-Starting process 'command '/usr/lib/jvm/temurin-25-jdk-amd64/bin/java''. Working directory: /home/runner/.gradle/.tmp/tmp-jvm8418144255238060356probe Command: /usr/lib/jvm/temurin-25-jdk-amd64/bin/java -Xmx32m -Xms32m -cp . JavaProbe
-Successfully started process 'command '/usr/lib/jvm/temurin-25-jdk-amd64/bin/java''
-Received JVM installation metadata from '/usr/lib/jvm/temurin-25-jdk-amd64': {JAVA_HOME=/usr/lib/jvm/temurin-25-jdk-amd64, JAVA_VERSION=25.0.4, JAVA_VENDOR=Eclipse Adoptium, RUNTIME_NAME=OpenJDK Runtime Environment, RUNTIME_VERSION=25.0.4+7-LTS, VM_NAME=OpenJDK 64-Bit Server VM, VM_VERSION=25.0.4+7-LTS, VM_VENDOR=Eclipse Adoptium, OS_ARCH=amd64}
-Starting process 'command '/usr/lib/jvm/temurin-11-jdk-amd64/bin/java''. Working directory: /home/runner/.gradle/.tmp/tmp-jvm17789752483166913164probe Command: /usr/lib/jvm/temurin-11-jdk-amd64/bin/java -Xmx32m -Xms32m -cp . JavaProbe
-Successfully started process 'command '/usr/lib/jvm/temurin-11-jdk-amd64/bin/java''
-Received JVM installation metadata from '/usr/lib/jvm/temurin-11-jdk-amd64': {JAVA_HOME=/usr/lib/jvm/temurin-11-jdk-amd64, JAVA_VERSION=11.0.32, JAVA_VENDOR=Eclipse Adoptium, RUNTIME_NAME=OpenJDK Runtime Environment, RUNTIME_VERSION=11.0.32+9, VM_NAME=OpenJDK 64-Bit Server VM, VM_VERSION=11.0.32+9, VM_VENDOR=Eclipse Adoptium, OS_ARCH=amd64}
-Starting process 'command '/usr/lib/jvm/temurin-21-jdk-amd64/bin/java''. Working directory: /home/runner/.gradle/.tmp/tmp-jvm364356972348843663probe Command: /usr/lib/jvm/temurin-21-jdk-amd64/bin/java -Xmx32m -Xms32m -cp . JavaProbe
-Successfully started process 'command '/usr/lib/jvm/temurin-21-jdk-amd64/bin/java''
-Received JVM installation metadata from '/usr/lib/jvm/temurin-21-jdk-amd64': {JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64, JAVA_VERSION=21.0.12, JAVA_VENDOR=Eclipse Adoptium, RUNTIME_NAME=OpenJDK Runtime Environment, RUNTIME_VERSION=21.0.12+8-LTS, VM_NAME=OpenJDK 64-Bit Server VM, VM_VERSION=21.0.12+8-LTS, VM_VENDOR=Eclipse Adoptium, OS_ARCH=amd64}
-Starting process 'command '/usr/lib/jvm/temurin-8-jdk-amd64/bin/java''. Working directory: /home/runner/.gradle/.tmp/tmp-jvm12437659248245755817probe Command: /usr/lib/jvm/temurin-8-jdk-amd64/bin/java -Xmx32m -Xms32m -cp . JavaProbe
-Successfully started process 'command '/usr/lib/jvm/temurin-8-jdk-amd64/bin/java''
-Received JVM installation metadata from '/usr/lib/jvm/temurin-8-jdk-amd64': {JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64/jre, JAVA_VERSION=1.8.0_502, JAVA_VENDOR=Temurin, RUNTIME_NAME=OpenJDK Runtime Environment, RUNTIME_VERSION=1.8.0_502-b07, VM_NAME=OpenJDK 64-Bit Server VM, VM_VERSION=25.502-b07, VM_VENDOR=Temurin, OS_ARCH=amd64}
-Tasks to be executed: [task ':target_teavm_wasm_gc:compileMainEpk', task ':target_teavm_wasm_gc:compileMainLanguageEpk', task ':target_teavm_wasm_gc:compileMainWasmRuntime', task ':target_teavm_wasm_gc:compileJava', task ':target_teavm_wasm_gc:processResources', task ':target_teavm_wasm_gc:classes', task ':target_teavm_wasm_gc:compileTeavmJava', task ':target_teavm_wasm_gc:processTeavmResources', task ':target_teavm_wasm_gc:teavmClasses', task ':target_teavm_wasm_gc:generateWasmGC', task ':target_teavm_wasm_gc:assembleMainComponents', task ':target_teavm_wasm_gc:makeMainWasmClientBundle']
-Tasks that were excluded: []
-Resolve mutations for :target_teavm_wasm_gc:compileMainEpk (Thread[Execution worker,5,main]) started.
-:target_teavm_wasm_gc:compileMainEpk (Thread[Execution worker,5,main]) started.
-
-> Task :target_teavm_wasm_gc:compileMainEpk
-Caching disabled for task ':target_teavm_wasm_gc:compileMainEpk' because:
-  Build cache is disabled
-  Caching has not been enabled for the task
-Task ':target_teavm_wasm_gc:compileMainEpk' is not up-to-date because:
-  No history is available.
-Resolve mutations for :target_teavm_wasm_gc:compileMainLanguageEpk (Thread[Execution worker,5,main]) started.
-:target_teavm_wasm_gc:compileMainLanguageEpk (Thread[Execution worker,5,main]) started.
-
-> Task :target_teavm_wasm_gc:compileMainLanguageEpk
-Caching disabled for task ':target_teavm_wasm_gc:compileMainLanguageEpk' because:
-  Build cache is disabled
-  Caching has not been enabled for the task
-Task ':target_teavm_wasm_gc:compileMainLanguageEpk' is not up-to-date because:
-  No history is available.
-Resolve mutations for :target_teavm_wasm_gc:compileMainWasmRuntime (Thread[Execution worker,5,main]) started.
-:target_teavm_wasm_gc:compileMainWasmRuntime (Thread[Execution worker,5,main]) started.
-
-> Task :target_teavm_wasm_gc:compileMainWasmRuntime
-Caching disabled for task ':target_teavm_wasm_gc:compileMainWasmRuntime' because:
-  Build cache is disabled
-  Caching has not been enabled for the task
-Task ':target_teavm_wasm_gc:compileMainWasmRuntime' is not up-to-date because:
-  No history is available.
-Starting process 'command '/usr/lib/jvm/temurin-17-jdk-amd64/bin/java''. Working directory: /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/target_teavm_wasm_gc Command: /usr/lib/jvm/temurin-17-jdk-amd64/bin/java -Dfile.encoding=UTF-8 -Duser.country -Duser.language=en -Duser.variant -cp /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/target_teavm_wasm_gc/buildtools/closure-compiler.jar com.google.javascript.jscomp.CommandLineRunner --compilation_level ADVANCED_OPTIMIZATIONS --assume_function_wrapper --emit_use_strict --isolation_mode IIFE --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/externs.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/eagruntime_util.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/eagruntime_main.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformApplication.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformAssets.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformAudio.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformFilesystem.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformInput.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformNetworking.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformOpenGL.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformRuntime.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformScreenRecord.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformVoiceClient.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformWebRTC.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformWebView.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/clientPlatformSingleplayer.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/serverPlatformSingleplayer.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/WASMGCBufferAllocator.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/fix-webm-duration.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/teavm_runtime.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/eagruntime_entrypoint.js --js_output_file /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/target_teavm_wasm_gc/javascript/eagruntime.js
-Successfully started process 'command '/usr/lib/jvm/temurin-17-jdk-amd64/bin/java''
-Resolve mutations for :target_teavm_wasm_gc:compileJava (Thread[Execution worker,5,main]) started.
-:target_teavm_wasm_gc:compileJava (Thread[Execution worker,5,main]) started.
-
-> Task :target_teavm_wasm_gc:compileJava
-Caching disabled for task ':target_teavm_wasm_gc:compileJava' because:
-  Build cache is disabled
-Task ':target_teavm_wasm_gc:compileJava' is not up-to-date because:
-  No history is available.
-The input changes require a full rebuild for incremental task ':target_teavm_wasm_gc:compileJava'.
-Compilation mode: in-process compilation
-Full recompilation is required because no incremental change information is available. This is usually caused by clean builds or changing compiler arguments.
-Compiling with toolchain '/usr/lib/jvm/temurin-17-jdk-amd64'.
-file or directory '/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/target_teavm_wasm_gc/src/main/java', not found
-Compiling with JDK Java compiler API.
-/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/uiutils/UiUtilsPacketSettingsScreen.java:58: error: cannot find symbol
-        if (searchField != null && inside(mouseX, mouseY, searchField.x, searchField.y, searchField.getWidth(), searchField.getHeight())) {
-                                                                                                                           ^
-  symbol:   method getHeight()
-  location: variable searchField of type TextFieldWidget
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-Note: Some input files use unchecked or unsafe operations.
-Note: Recompile with -Xlint:unchecked for details.
-1 error
-
-> Task :target_teavm_wasm_gc:compileJava FAILED
-
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':target_teavm_wasm_gc:compileJava'.
-> Compilation failed; see the compiler output below.
-  Note: Recompile with -Xlint:deprecation for details.
-  Note: Recompile with -Xlint:unchecked for details.
-  Note: Some input files use or override a deprecated API.
-  Note: Some input files use unchecked or unsafe operations.
-  /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/uiutils/UiUtilsPacketSettingsScreen.java:58: error: cannot find symbol
-          if (searchField != null && inside(mouseX, mouseY, searchField.x, searchField.y, searchField.getWidth(), searchField.getHeight())) {
-                                                                                                                             ^
-    symbol:   method getHeight()
-    location: variable searchField of type TextFieldWidget
-  1 error
-
 * Try:
 > Check your code and dependencies to fix the compilation error(s)
 > Run with --scan to get full insights.
@@ -230,19 +135,85 @@ org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':target_
 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
+	at org.gradle.execution.plan.DefaultPlanExecutor.process(DefaultPlanExecutor.java:111)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.executeWithServices(DefaultTaskExecutionGraph.java:138)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.execute(DefaultTaskExecutionGraph.java:123)
+	at org.gradle.execution.SelectedTaskExecutionAction.execute(SelectedTaskExecutionAction.java:35)
+	at org.gradle.execution.DryRunBuildExecutionAction.execute(DryRunBuildExecutionAction.java:51)
+	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:54)
+	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:43)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor.execute(BuildOperationFiringBuildWorkerExecutor.java:40)
+	at org.gradle.internal.build.DefaultBuildLifecycleController.lambda$executeTasks$10(DefaultBuildLifecycleController.java:313)
+	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:266)
+	at org.gradle.internal.model.StateTransitionController.lambda$tryTransition$8(StateTransitionController.java:177)
+	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:46)
+	at org.gradle.internal.model.StateTransitionController.tryTransition(StateTransitionController.java:177)
+	at org.gradle.internal.build.DefaultBuildLifecycleController.executeTasks(DefaultBuildLifecycleController.java:304)
+	at org.gradle.internal.build.DefaultBuildWorkGraphController$DefaultBuildWorkGraph.runWork(DefaultBuildWorkGraphController.java:220)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:263)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:127)
+	at org.gradle.composite.internal.DefaultBuildController.doRun(DefaultBuildController.java:181)
+	at org.gradle.composite.internal.DefaultBuildController.access$000(DefaultBuildController.java:50)
+	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.lambda$run$0(DefaultBuildController.java:198)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:85)
+	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.run(DefaultBuildController.java:198)
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
 Caused by: org.gradle.api.internal.tasks.compile.CompilationFailedException: Compilation failed; see the compiler output below.
+/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/screen/Screen.java:80: error: method render in class UiUtils cannot be applied to given types;
+        UiUtils.render(this, this.font, p_render_1_, p_render_2_, p_render_3_);
+               ^
+  required: Screen,int,int,float
+  found:    Screen,FontRenderer,int,int,float
+  reason: actual and formal argument lists differ in length
+/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/screen/Screen.java:138: error: method keyPressed in class UiUtils cannot be applied to given types;
+        if (UiUtils.keyPressed(
+                   ^
+  required: int,int,int
+  found:    Screen,int,int,int
+  reason: actual and formal argument lists differ in length
+/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/screen/Screen.java:185: error: method charTyped in class UiUtils cannot be applied to given types;
+        if (UiUtils.charTyped(this, p_charTyped_1_, p_charTyped_2_)) {
+                   ^
+  required: char,int
+  found:    Screen,char,int
+  reason: actual and formal argument lists differ in length
 Note: Recompile with -Xlint:deprecation for details.
+/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/screen/Screen.java:205: error: incompatible types: possible lossy conversion from double to int
+                p_mouseClicked_1_,
+                ^
 Note: Recompile with -Xlint:unchecked for details.
 Note: Some input files use or override a deprecated API.
+Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
 Note: Some input files use unchecked or unsafe operations.
-/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/uiutils/UiUtilsPacketSettingsScreen.java:58: error: cannot find symbol
+/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/screen/Screen.java:209: error: cannot find symbol
+            this.setFocused(UiUtils.getChatInput());
+                                   ^
+  symbol:   method getChatInput()
+  location: class UiUtils
+/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/uiutils/UiUtilsPacketInspectorScreen.java:49: error: cannot find symbol
         if (searchField != null && inside(mouseX, mouseY, searchField.x, searchField.y, searchField.getWidth(), searchField.getHeight())) {
                                                                                                                            ^
   symbol:   method getHeight()
   location: variable searchField of type TextFieldWidget
-1 error
+/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/uiutils/UiUtilsPacketSettingsScreen.java:29: error: cannot find symbol
+        if(searchField!=null&&inside(mouseX,mouseY,searchField.x,searchField.y,searchField.getWidth(),searchField.getHeight())){searchField.mouseClicked(mouseX,mouseY,button);setFocused(searchField);return true;}
+                                                                                                                 ^
+  symbol:   method getHeight()
+  location: variable searchField of type TextFieldWidget
+/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/uiutils/UiUtilsPacketSettingsScreen.java:30: error: cannot find symbol
+        if(delayField!=null&&inside(mouseX,mouseY,delayField.x,delayField.y,delayField.getWidth(),delayField.getHeight())){delayField.mouseClicked(mouseX,mouseY,button);setFocused(delayField);return true;}
+                                                                                                            ^
+  symbol:   method getHeight()
+  location: variable delayField of type TextFieldWidget
+8 errors
 	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:89)
 	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:50)
 	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.delegateAndHandleErrors(NormalizingJavaCompiler.java:98)
@@ -393,6 +364,35 @@ Note: Some input files use unchecked or unsafe operations.
 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
+	at org.gradle.execution.plan.DefaultPlanExecutor.process(DefaultPlanExecutor.java:111)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.executeWithServices(DefaultTaskExecutionGraph.java:138)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.execute(DefaultTaskExecutionGraph.java:123)
+	at org.gradle.execution.SelectedTaskExecutionAction.execute(SelectedTaskExecutionAction.java:35)
+	at org.gradle.execution.DryRunBuildExecutionAction.execute(DryRunBuildExecutionAction.java:51)
+	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:54)
+	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:43)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor.execute(BuildOperationFiringBuildWorkerExecutor.java:40)
+	at org.gradle.internal.build.DefaultBuildLifecycleController.lambda$executeTasks$10(DefaultBuildLifecycleController.java:313)
+	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:266)
+	at org.gradle.internal.model.StateTransitionController.lambda$tryTransition$8(StateTransitionController.java:177)
+	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:46)
+	at org.gradle.internal.model.StateTransitionController.tryTransition(StateTransitionController.java:177)
+	at org.gradle.internal.build.DefaultBuildLifecycleController.executeTasks(DefaultBuildLifecycleController.java:304)
+	at org.gradle.internal.build.DefaultBuildWorkGraphController$DefaultBuildWorkGraph.runWork(DefaultBuildWorkGraphController.java:220)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:263)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:127)
+	at org.gradle.composite.internal.DefaultBuildController.doRun(DefaultBuildController.java:181)
+	at org.gradle.composite.internal.DefaultBuildController.access$000(DefaultBuildController.java:50)
+	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.lambda$run$0(DefaultBuildController.java:198)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:85)
+	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.run(DefaultBuildController.java:198)
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
 
@@ -414,45 +414,66 @@ Detected error/failure lines:
 42:Selected primary task 'makeMainWasmClientBundle' from project :
 55:Tasks to be executed: [task ':target_teavm_wasm_gc:compileMainEpk', task ':target_teavm_wasm_gc:compileMainLanguageEpk', task ':target_teavm_wasm_gc:compileMainWasmRuntime', task ':target_teavm_wasm_gc:compileJava', task ':target_teavm_wasm_gc:processResources', task ':target_teavm_wasm_gc:classes', task ':target_teavm_wasm_gc:compileTeavmJava', task ':target_teavm_wasm_gc:processTeavmResources', task ':target_teavm_wasm_gc:teavmClasses', task ':target_teavm_wasm_gc:generateWasmGC', task ':target_teavm_wasm_gc:assembleMainComponents', task ':target_teavm_wasm_gc:makeMainWasmClientBundle']
 57:Resolve mutations for :target_teavm_wasm_gc:compileMainEpk (Thread[Execution worker,5,main]) started.
-58::target_teavm_wasm_gc:compileMainEpk (Thread[Execution worker,5,main]) started.
+58::target_teavm_wasm_gc:compileMainEpk (Thread[included builds,5,main]) started.
 60:> Task :target_teavm_wasm_gc:compileMainEpk
 61:Caching disabled for task ':target_teavm_wasm_gc:compileMainEpk' because:
 64:Task ':target_teavm_wasm_gc:compileMainEpk' is not up-to-date because:
-66:Resolve mutations for :target_teavm_wasm_gc:compileMainLanguageEpk (Thread[Execution worker,5,main]) started.
-67::target_teavm_wasm_gc:compileMainLanguageEpk (Thread[Execution worker,5,main]) started.
+66:Resolve mutations for :target_teavm_wasm_gc:compileMainLanguageEpk (Thread[included builds,5,main]) started.
+67::target_teavm_wasm_gc:compileMainLanguageEpk (Thread[included builds,5,main]) started.
 69:> Task :target_teavm_wasm_gc:compileMainLanguageEpk
 70:Caching disabled for task ':target_teavm_wasm_gc:compileMainLanguageEpk' because:
 73:Task ':target_teavm_wasm_gc:compileMainLanguageEpk' is not up-to-date because:
-75:Resolve mutations for :target_teavm_wasm_gc:compileMainWasmRuntime (Thread[Execution worker,5,main]) started.
-76::target_teavm_wasm_gc:compileMainWasmRuntime (Thread[Execution worker,5,main]) started.
+75:Resolve mutations for :target_teavm_wasm_gc:compileMainWasmRuntime (Thread[included builds,5,main]) started.
+76::target_teavm_wasm_gc:compileMainWasmRuntime (Thread[included builds,5,main]) started.
 78:> Task :target_teavm_wasm_gc:compileMainWasmRuntime
 79:Caching disabled for task ':target_teavm_wasm_gc:compileMainWasmRuntime' because:
 82:Task ':target_teavm_wasm_gc:compileMainWasmRuntime' is not up-to-date because:
 84:Starting process 'command '/usr/lib/jvm/temurin-17-jdk-amd64/bin/java''. Working directory: /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/target_teavm_wasm_gc Command: /usr/lib/jvm/temurin-17-jdk-amd64/bin/java -Dfile.encoding=UTF-8 -Duser.country -Duser.language=en -Duser.variant -cp /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/target_teavm_wasm_gc/buildtools/closure-compiler.jar com.google.javascript.jscomp.CommandLineRunner --compilation_level ADVANCED_OPTIMIZATIONS --assume_function_wrapper --emit_use_strict --isolation_mode IIFE --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/externs.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/eagruntime_util.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/eagruntime_main.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformApplication.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformAssets.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformAudio.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformFilesystem.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformInput.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformNetworking.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformOpenGL.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformRuntime.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformScreenRecord.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformVoiceClient.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformWebRTC.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformWebView.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/clientPlatformSingleplayer.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/serverPlatformSingleplayer.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/WASMGCBufferAllocator.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/fix-webm-duration.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/teavm_runtime.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/eagruntime_entrypoint.js --js_output_file /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/target_teavm_wasm_gc/javascript/eagruntime.js
-86:Resolve mutations for :target_teavm_wasm_gc:compileJava (Thread[Execution worker,5,main]) started.
-87::target_teavm_wasm_gc:compileJava (Thread[Execution worker,5,main]) started.
+86:Resolve mutations for :target_teavm_wasm_gc:compileJava (Thread[included builds,5,main]) started.
+87::target_teavm_wasm_gc:compileJava (Thread[included builds,5,main]) started.
 89:> Task :target_teavm_wasm_gc:compileJava
 90:Caching disabled for task ':target_teavm_wasm_gc:compileJava' because:
 92:Task ':target_teavm_wasm_gc:compileJava' is not up-to-date because:
 94:The input changes require a full rebuild for incremental task ':target_teavm_wasm_gc:compileJava'.
 98:file or directory '/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/target_teavm_wasm_gc/src/main/java', not found
-100:/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/uiutils/UiUtilsPacketSettingsScreen.java:58: error: cannot find symbol
-111:> Task :target_teavm_wasm_gc:compileJava FAILED
-113:FAILURE: Build failed with an exception.
-115:* What went wrong:
-116:Execution failed for task ':target_teavm_wasm_gc:compileJava'.
-117:> Compilation failed; see the compiler output below.
-122:  /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/uiutils/UiUtilsPacketSettingsScreen.java:58: error: cannot find symbol
-133:* Exception is:
-134:org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':target_teavm_wasm_gc:compileJava'.
-136:	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:293)
-144:	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
-165:	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
-167:Caused by: org.gradle.api.internal.tasks.compile.CompilationFailedException: Compilation failed; see the compiler output below.
-172:/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/uiutils/UiUtilsPacketSettingsScreen.java:58: error: cannot find symbol
-307:	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
-328:	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
-332:BUILD FAILED in 54s
+100:/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/screen/Screen.java:80: error: method render in class UiUtils cannot be applied to given types;
+106:/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/screen/Screen.java:138: error: method keyPressed in class UiUtils cannot be applied to given types;
+112:/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/screen/Screen.java:185: error: method charTyped in class UiUtils cannot be applied to given types;
+118:/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/screen/Screen.java:205: error: incompatible types: possible lossy conversion from double to int
+121:/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/screen/Screen.java:209: error: cannot find symbol
+126:/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/uiutils/UiUtilsPacketInspectorScreen.java:49: error: cannot find symbol
+131:/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/uiutils/UiUtilsPacketSettingsScreen.java:29: error: cannot find symbol
+136:/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/uiutils/UiUtilsPacketSettingsScreen.java:30: error: cannot find symbol
+148:> Task :target_teavm_wasm_gc:compileJava FAILED
+150:FAILURE: Build failed with an exception.
+152:* What went wrong:
+153:Execution failed for task ':target_teavm_wasm_gc:compileJava'.
+154:> Compilation failed; see the compiler output below.
+155:  /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/screen/Screen.java:80: error: method render in class UiUtils cannot be applied to given types;
+161:  /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/screen/Screen.java:138: error: method keyPressed in class UiUtils cannot be applied to given types;
+167:  /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/screen/Screen.java:185: error: method charTyped in class UiUtils cannot be applied to given types;
+174:  /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/screen/Screen.java:205: error: incompatible types: possible lossy conversion from double to int
+181:  /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/screen/Screen.java:209: error: cannot find symbol
+186:  /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/uiutils/UiUtilsPacketInspectorScreen.java:49: error: cannot find symbol
+191:  /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/uiutils/UiUtilsPacketSettingsScreen.java:29: error: cannot find symbol
+196:  /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/uiutils/UiUtilsPacketSettingsScreen.java:30: error: cannot find symbol
+207:* Exception is:
+208:org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':target_teavm_wasm_gc:compileJava'.
+210:	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:293)
+218:	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
+268:	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+270:Caused by: org.gradle.api.internal.tasks.compile.CompilationFailedException: Compilation failed; see the compiler output below.
+271:/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/screen/Screen.java:80: error: method render in class UiUtils cannot be applied to given types;
+277:/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/screen/Screen.java:138: error: method keyPressed in class UiUtils cannot be applied to given types;
+283:/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/screen/Screen.java:185: error: method charTyped in class UiUtils cannot be applied to given types;
+290:/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/screen/Screen.java:205: error: incompatible types: possible lossy conversion from double to int
+297:/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/screen/Screen.java:209: error: cannot find symbol
+302:/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/uiutils/UiUtilsPacketInspectorScreen.java:49: error: cannot find symbol
+307:/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/uiutils/UiUtilsPacketSettingsScreen.java:29: error: cannot find symbol
+312:/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/main/java/net/minecraft/client/gui/uiutils/UiUtilsPacketSettingsScreen.java:30: error: cannot find symbol
+447:	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
+497:	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+501:BUILD FAILED in 54s
 ----------------------------------------
 
 Full Gradle output is available in:
@@ -472,13 +493,13 @@ IMPORTANT FILE CHECKS
 ========================================
 
 bootstrap.js:
--rw-r--r-- 1 runner runner 7.7K Aug 18 20:23 target_teavm_wasm_gc/javascript_dist/bootstrap.js
+-rw-r--r-- 1 runner runner 7.7K Aug 18 20:39 target_teavm_wasm_gc/javascript_dist/bootstrap.js
 
 assets.epw:
--rw-r--r-- 1 runner runner 26M Aug 18 20:23 target_teavm_wasm_gc/javascript_dist/assets.epw
+-rw-r--r-- 1 runner runner 26M Aug 18 20:39 target_teavm_wasm_gc/javascript_dist/assets.epw
 
 favicon.png:
--rw-r--r-- 1 runner runner 1.3K Aug 18 20:23 target_teavm_wasm_gc/javascript_dist/favicon.png
+-rw-r--r-- 1 runner runner 1.3K Aug 18 20:39 target_teavm_wasm_gc/javascript_dist/favicon.png
 
 ========================================
 PROJECT DIAGNOSTICS
@@ -516,7 +537,6 @@ All WASM-related directories:
 ./src/wasm-gc-teavm/java/net/lax1dude/eaglercraft/sp/server/internal/wasm_gc_teavm
 ./target_teavm_javascript
 ./target_teavm_wasm_gc
-./target_teavm_wasm_gc/build/classes/java/main/net/lax1dude/eaglercraft/internal/wasm_gc_teavm
 
 Git status:
 ?? reports/
@@ -524,4 +544,4 @@ Git status:
 ========================================
 BUILD COMPLETED
 ========================================
-Finished: 2026-08-18 20:24:10 UTC
+Finished: 2026-08-18 20:40:54 UTC
