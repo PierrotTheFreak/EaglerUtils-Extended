@@ -316,7 +316,7 @@ public class UiUtilsPacketManager {
                 packetClass
         )) {
             return false;
-        }/
+        }
 
         return delayedPacketTypes.contains(
                 packetClass
