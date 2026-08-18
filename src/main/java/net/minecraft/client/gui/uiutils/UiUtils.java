@@ -35,7 +35,7 @@ public class UiUtils {
     private static final Set<Class<?>> delayedPacketTypes =
             new LinkedHashSet<>();
 
-    private UiUtilsPacketManager() {
+    private UiUtils() {
     }
 
     /*
