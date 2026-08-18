@@ -1,7 +1,6 @@
 package net.minecraft.client.gui.uiutils;
 
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.network.PacketDirection;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.network.PacketDirection;
 import net.minecraft.util.text.StringTextComponent;
@@ -26,8 +25,9 @@ public class UiUtilsPacketSettingsScreen extends Screen {
     protected void init() {
         searchField = new TextFieldWidget(font, getLeft() + 10, 38, W - 20, 20, "Search packets...");
         searchField.setMaxStringLength(128);
-        searchField.setFocused(true);
         addButton(searchField);
+        searchField.setFocused(true);
+        setFocused(searchField);
         scroll = 0;
     }
 
@@ -55,7 +55,11 @@ public class UiUtilsPacketSettingsScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (searchField != null && searchField.mouseClicked(mouseX, mouseY, button)) return true;
+        if (searchField != null && inside(mouseX, mouseY, searchField.x, searchField.y, searchField.getWidth(), searchField.getHeight())) {
+            searchField.mouseClicked(mouseX, mouseY, button);
+            setFocused(searchField);
+            return true;
+        }
         int left = getLeft();
         if (button == 0) {
             if (inside(mouseX, mouseY, left + 10, 8, 100, 22)) {
@@ -91,7 +95,18 @@ public class UiUtilsPacketSettingsScreen extends Screen {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (keyCode == 256) { closeScreen(); return true; }
+        if (searchField != null && searchField.isFocused()) {
+            if (searchField.keyPressed(keyCode, scanCode, modifiers)) return true;
+        }
         return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public boolean charTyped(char codePoint, int modifiers) {
+        if (searchField != null && searchField.isFocused()) {
+            if (searchField.charTyped(codePoint, modifiers)) return true;
+        }
+        return super.charTyped(codePoint, modifiers);
     }
 
     private void closeScreen() { if (mc != null) mc.displayGuiScreen(parent); }
