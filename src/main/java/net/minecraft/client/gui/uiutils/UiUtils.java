@@ -31,11 +31,10 @@ public class UiUtils {
     private static final String[] BUTTON_NAMES = {
             "Close Without Packet", "De-sync", "Send Packets", "Delay Packets",
             "Save GUI", "Disconnect + Send", "Fabricate Packet", "Packet Inspector",
-            "Copy GUI Title JSON", "Macros"
+            "Packet Logger", "Copy GUI Title JSON", "Macros"
     };
 
     private UiUtils() {}
-
     public static boolean shouldShow(Screen screen) { return screen instanceof ContainerScreen || screen instanceof ChatScreen; }
 
     public static void init(Screen screen) {
@@ -55,10 +54,7 @@ public class UiUtils {
     private static int getButtonY(int index) { return PANEL_Y + TITLE_HEIGHT + 4 + index * BUTTON_STEP; }
     private static int getChatInputY() { return PANEL_Y + TITLE_HEIGHT + 4 + getButtonsHeight() + CHAT_GAP + CHAT_LABEL_HEIGHT; }
     private static int getStatusY() { return getPanelHeight() - STATUS_HEIGHT; }
-
-    private static boolean isInside(int mouseX, int mouseY, int x, int y, int width, int height) {
-        return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
-    }
+    private static boolean isInside(int mouseX, int mouseY, int x, int y, int width, int height) { return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height; }
     private static boolean isButtonHovered(int mouseX, int mouseY, int index) { return isInside(mouseX, mouseY, CONTROL_X, getButtonY(index), CONTROL_WIDTH, BUTTON_HEIGHT); }
 
     private static void drawButton(Screen screen, FontRenderer font, String text, int x, int y, int width, int height, int mouseX, int mouseY) {
@@ -87,8 +83,9 @@ public class UiUtils {
             case 5: disconnectAndSend(screen); break;
             case 6: if (screen.mc != null) screen.mc.displayGuiScreen(new UiUtilsFabricatePacketScreen(screen)); break;
             case 7: if (screen.mc != null) screen.mc.displayGuiScreen(new UiUtilsPacketInspectorScreen(screen)); break;
-            case 8: copyGuiTitleJson(screen); break;
-            case 9: if (screen.mc != null) screen.mc.displayGuiScreen(new UiUtilsMacroScreen(screen)); break;
+            case 8: if (screen.mc != null) screen.mc.displayGuiScreen(new UiUtilsPacketLoggerScreen(screen)); break;
+            case 9: copyGuiTitleJson(screen); break;
+            case 10: if (screen.mc != null) screen.mc.displayGuiScreen(new UiUtilsMacroScreen(screen)); break;
             default: break;
         }
     }
@@ -118,11 +115,7 @@ public class UiUtils {
     }
 
     private static void copyGuiTitleJson(Screen screen) {
-        try {
-            ITextComponent title = screen.getTitle();
-            String json = ITextComponent.Serializer.toJson(title);
-            EagRuntime.setClipboard(json);
-        } catch (Throwable ignored) {}
+        try { EagRuntime.setClipboard(ITextComponent.Serializer.toJson(screen.getTitle())); } catch (Throwable ignored) {}
     }
 
     public static boolean mouseClicked(Screen screen, int mouseX, int mouseY, int button) {
@@ -138,13 +131,8 @@ public class UiUtils {
         return false;
     }
 
-    public static boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        return chatInput != null && chatInput.isFocused() && chatInput.keyPressed(keyCode, scanCode, modifiers);
-    }
-
-    public static boolean charTyped(char codePoint, int modifiers) {
-        return chatInput != null && chatInput.isFocused() && chatInput.charTyped(codePoint, modifiers);
-    }
+    public static boolean keyPressed(int keyCode, int scanCode, int modifiers) { return chatInput != null && chatInput.isFocused() && chatInput.keyPressed(keyCode, scanCode, modifiers); }
+    public static boolean charTyped(char codePoint, int modifiers) { return chatInput != null && chatInput.isFocused() && chatInput.charTyped(codePoint, modifiers); }
 
     public static void render(Screen screen, int mouseX, int mouseY, float partialTicks) {
         FontRenderer font = screen.mc.fontRenderer;
