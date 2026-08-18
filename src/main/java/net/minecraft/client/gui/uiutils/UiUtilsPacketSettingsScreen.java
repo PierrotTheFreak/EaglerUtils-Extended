@@ -1,6 +1,7 @@
 package net.minecraft.client.gui.uiutils;
 
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.network.PacketDirection;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.util.text.StringTextComponent;
 
@@ -60,6 +61,7 @@ public class UiUtilsPacketSettingsScreen extends Screen {
      * Vertical scroll amount in pixels.
      */
     private int scrollOffset = 0;
+    private PacketDirection packetDirection = PacketDirection.SERVERBOUND;
 
     public UiUtilsPacketSettingsScreen(Screen parent) {
         super(
@@ -146,7 +148,7 @@ this.scrollOffset = 0;
 
         String[] allPackets =
                 UiUtilsPacketManager
-                        .getAllPacketTypes();
+                        .getAllPacketTypes(packetDirection);
 
         String[] results =
                 new String[allPackets.length];
@@ -262,6 +264,13 @@ this.scrollOffset = 0;
          */
         if (button == 0) {
 
+            if (isInside(mouseX, mouseY, left + 226, 8, 104, 22)) {
+                packetDirection = packetDirection == PacketDirection.SERVERBOUND
+                        ? PacketDirection.CLIENTBOUND : PacketDirection.SERVERBOUND;
+                scrollOffset = 0;
+                return true;
+            }
+
             /*
              * Delay All
              */
@@ -277,7 +286,7 @@ this.scrollOffset = 0;
             ) {
 
                 UiUtilsPacketManager
-                        .delayAllPackets();
+                        .delayAllPackets(packetDirection);
 
                 return true;
             }
@@ -297,7 +306,7 @@ this.scrollOffset = 0;
             ) {
 
                 UiUtilsPacketManager
-                        .clearDelayedPacketTypes();
+                        .clearDelayedPacketTypes(packetDirection);
 
                 return true;
             }
@@ -344,7 +353,7 @@ this.scrollOffset = 0;
 
                     UiUtilsPacketManager
                             .togglePacketDelayed(
-                                    packets[i]
+                                    packets[i], packetDirection
                             );
 
                     return true;
@@ -529,6 +538,12 @@ this.scrollOffset = 0;
                 mouseY
         );
 
+        drawButton(
+                left + 226, 8, 104, 22,
+                packetDirection == PacketDirection.SERVERBOUND ? "C -> S" : "S -> C",
+                mouseX, mouseY
+        );
+
         /*
          * --------------------------------------------------------
          * Search label
@@ -536,7 +551,9 @@ this.scrollOffset = 0;
          */
         this.drawString(
                 this.font,
-                "Search packets:",
+                packetDirection == PacketDirection.SERVERBOUND
+                        ? "Client -> Server packets:"
+                        : "Server -> Client packets:",
                 left + SEARCH_X,
                 29,
                 0xAAAAAA
@@ -723,9 +740,9 @@ this.scrollOffset = 0;
         this.drawString(
                 this.font,
                 "Selected: "
-                        + getSelectedCount()
+                        + getSelectedCount(packetDirection)
                         + " / "
-                        + getSelectableCount(),
+                        + getSelectableCount(packetDirection),
                 left + 165,
                 ACTION_BUTTON_Y + 7,
                 0xAAAAAA

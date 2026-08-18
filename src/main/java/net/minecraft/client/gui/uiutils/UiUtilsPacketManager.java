@@ -36,6 +36,12 @@ public class UiUtilsPacketManager {
     private static final Set<Class<?>> delayedPacketTypes =
             new LinkedHashSet<>();
 
+    private static final Set<Class<?>> delayedServerboundPacketTypes =
+            delayedPacketTypes;
+
+    private static final Set<Class<?>> delayedClientboundPacketTypes =
+            new LinkedHashSet<>();
+
     private UiUtilsPacketManager() {
     }
 
@@ -111,59 +117,48 @@ public class UiUtilsPacketManager {
      */
     public static List<Class<? extends IPacket<?>>>
     getAllPacketClasses() {
+        return getAllPacketClasses(PacketDirection.SERVERBOUND);
+    }
 
-        return ProtocolType.PLAY.getPacketClasses(
-                PacketDirection.SERVERBOUND
-        );
+    public static List<Class<? extends IPacket<?>>>
+    getAllPacketClasses(PacketDirection direction) {
+        return ProtocolType.PLAY.getPacketClasses(direction);
     }
 
     /**
      * Returns the dynamically discovered packet names.
      */
     public static String[] getAllPacketTypes() {
+        return getAllPacketTypes(PacketDirection.SERVERBOUND);
+    }
 
+    public static String[] getAllPacketTypes(PacketDirection direction) {
         List<Class<? extends IPacket<?>>> packetClasses =
-                getAllPacketClasses();
-
-        String[] result =
-                new String[packetClasses.size()];
-
+                getAllPacketClasses(direction);
+        String[] result = new String[packetClasses.size()];
         for (int i = 0; i < packetClasses.size(); ++i) {
-            result[i] =
-                    packetClasses.get(i).getSimpleName();
+            result[i] = packetClasses.get(i).getSimpleName();
         }
-
         return result;
     }
 
-    /**
-     * Finds a packet class by its simple class name.
-     */
     private static Class<?> findPacketClass(
-            String packetName
+            String packetName, PacketDirection direction
     ) {
-        if (packetName == null) {
-            return null;
-        }
-
-        List<Class<? extends IPacket<?>>> packetClasses =
-                getAllPacketClasses();
-
-        for (
-                Class<? extends IPacket<?>> packetClass
-                        : packetClasses
-        ) {
-
-            if (
-                    packetClass
-                            .getSimpleName()
-                            .equals(packetName)
-            ) {
+        if (packetName == null) return null;
+        for (Class<? extends IPacket<?>> packetClass
+                : getAllPacketClasses(direction)) {
+            if (packetClass.getSimpleName().equals(packetName)) {
                 return packetClass;
             }
         }
-
         return null;
+    }
+
+    private static Set<Class<?>> getSelection(PacketDirection direction) {
+        return direction == PacketDirection.CLIENTBOUND
+                ? delayedClientboundPacketTypes
+                : delayedServerboundPacketTypes;
     }
 
     /*
@@ -175,128 +170,78 @@ public class UiUtilsPacketManager {
     /**
      * Returns whether a packet type is currently selected.
      */
-    public static boolean isPacketDelayed(
-            String packetName
-    ) {
-        Class<?> packetClass =
-                findPacketClass(packetName);
-
-        return packetClass != null
-                && delayedPacketTypes.contains(
-                packetClass
-        );
+    public static boolean isPacketDelayed(String packetName) {
+        return isPacketDelayed(packetName, PacketDirection.SERVERBOUND);
     }
 
-    /**
-     * Returns all currently selected packet names.
-     *
-     * Used by the macro system to save/restore selections.
-     */
+    public static boolean isPacketDelayed(
+            String packetName, PacketDirection direction
+    ) {
+        Class<?> packetClass = findPacketClass(packetName, direction);
+        return packetClass != null && getSelection(direction).contains(packetClass);
+    }
+
     public static Set<String> getSelectedPacketTypes() {
+        return getSelectedPacketTypes(PacketDirection.SERVERBOUND);
+    }
 
-        Set<String> result =
-                new LinkedHashSet<>();
-
-        for (
-                String packet :
-                        getAllPacketTypes()
-        ) {
-
-            if (isPacketDelayed(packet)) {
-                result.add(packet);
-            }
+    public static Set<String> getSelectedPacketTypes(PacketDirection direction) {
+        Set<String> result = new LinkedHashSet<>();
+        for (String packet : getAllPacketTypes(direction)) {
+            if (isPacketDelayed(packet, direction)) result.add(packet);
         }
-
         return result;
     }
 
-    /**
-     * Explicitly selects or deselects a packet.
-     */
-    public static void setPacketDelayed(
-            String packetName,
-            boolean delayed
-    ) {
-        Class<?> packetClass =
-                findPacketClass(packetName);
-
-        if (packetClass == null) {
-            return;
-        }
-
-        /*
-         * Keep-alive can NEVER be delayed.
-         */
-        if (isKeepAlivePacket(packetClass)) {
-            delayedPacketTypes.remove(packetClass);
-            return;
-        }
-
-        if (delayed) {
-            delayedPacketTypes.add(packetClass);
-        } else {
-            delayedPacketTypes.remove(packetClass);
-        }
+    public static void setPacketDelayed(String packetName, boolean delayed) {
+        setPacketDelayed(packetName, delayed, PacketDirection.SERVERBOUND);
     }
 
-    /**
-     * Toggles a packet selection.
-     *
-     * @return true when the packet is now selected.
-     */
-    public static boolean togglePacketDelayed(
-            String packetName
+    public static void setPacketDelayed(
+            String packetName, boolean delayed, PacketDirection direction
     ) {
-        Class<?> packetClass =
-                findPacketClass(packetName);
+        Class<?> packetClass = findPacketClass(packetName, direction);
+        if (packetClass == null || isKeepAlivePacket(packetClass)) return;
+        if (delayed) getSelection(direction).add(packetClass);
+        else getSelection(direction).remove(packetClass);
+    }
 
-        if (packetClass == null) {
+    public static boolean togglePacketDelayed(String packetName) {
+        return togglePacketDelayed(packetName, PacketDirection.SERVERBOUND);
+    }
+
+    public static boolean togglePacketDelayed(
+            String packetName, PacketDirection direction
+    ) {
+        Class<?> packetClass = findPacketClass(packetName, direction);
+        if (packetClass == null || isKeepAlivePacket(packetClass)) return false;
+        Set<Class<?>> selection = getSelection(direction);
+        if (selection.contains(packetClass)) {
+            selection.remove(packetClass);
             return false;
         }
-
-        /*
-         * Keep-alive can NEVER be delayed.
-         */
-        if (isKeepAlivePacket(packetClass)) {
-            return false;
-        }
-
-        if (delayedPacketTypes.contains(packetClass)) {
-            delayedPacketTypes.remove(packetClass);
-            return false;
-        }
-
-        delayedPacketTypes.add(packetClass);
+        selection.add(packetClass);
         return true;
     }
 
-    /**
-     * Select every dynamically registered PLAY SERVERBOUND
-     * packet except keep-alive.
-     */
     public static void delayAllPackets() {
+        delayAllPackets(PacketDirection.SERVERBOUND);
+    }
 
-        delayedPacketTypes.clear();
-
-        List<Class<? extends IPacket<?>>> packetClasses =
-                getAllPacketClasses();
-
-        for (
-                Class<? extends IPacket<?>> packetClass
-                        : packetClasses
-        ) {
-
-            if (!isKeepAlivePacket(packetClass)) {
-                delayedPacketTypes.add(packetClass);
-            }
+    public static void delayAllPackets(PacketDirection direction) {
+        Set<Class<?>> selection = getSelection(direction);
+        selection.clear();
+        for (Class<? extends IPacket<?>> packetClass : getAllPacketClasses(direction)) {
+            if (!isKeepAlivePacket(packetClass)) selection.add(packetClass);
         }
     }
 
-    /**
-     * Deselect every packet.
-     */
     public static void clearDelayedPacketTypes() {
-        delayedPacketTypes.clear();
+        clearDelayedPacketTypes(PacketDirection.SERVERBOUND);
+    }
+
+    public static void clearDelayedPacketTypes(PacketDirection direction) {
+        getSelection(direction).clear();
     }
 
     /*
@@ -352,6 +297,12 @@ public class UiUtilsPacketManager {
     public static boolean shouldDelayPacket(
             IPacket<?> packet
     ) {
+        return shouldDelayPacket(packet, PacketDirection.SERVERBOUND);
+    }
+
+    public static boolean shouldDelayPacket(
+            IPacket<?> packet, PacketDirection direction
+    ) {
         if (packet == null) {
             return false;
         }
@@ -366,9 +317,32 @@ public class UiUtilsPacketManager {
             return false;
         }
 
-        return delayedPacketTypes.contains(
-                packetClass
-        );
+        return getSelection(direction).contains(packetClass);
+    }
+
+    /**
+     * Handles a packet received from the server. Returns true when the
+     * packet was consumed and should be processed later.
+     */
+    public static boolean handleIncomingPacket(IPacket<?> packet) {
+        if (packet == null) return false;
+        if (isKeepAlivePacket(packet.getClass())) return false;
+        if (!delayPackets || !shouldDelayPacket(packet, PacketDirection.CLIENTBOUND)) {
+            return false;
+        }
+        delayedIncomingPackets.add(packet);
+        return true;
+    }
+
+    private static final Queue<IPacket<?>> delayedIncomingPackets =
+            new LinkedList<>();
+
+    public static int getDelayedIncomingPacketCount() {
+        return delayedIncomingPackets.size();
+    }
+
+    public static IPacket<?> pollDelayedIncomingPacket() {
+        return delayedIncomingPackets.poll();
     }
 
     /*

@@ -13,6 +13,9 @@ public class PacketThreadUtil {
    }
 
    public static <T extends INetHandler> void checkThreadAndEnqueue(IPacket<T> packetIn, T processor, ThreadTaskExecutor<?> executor) throws ThreadQuickExitException {
+      if (net.minecraft.client.gui.uiutils.UiUtilsPacketManager.handleIncomingPacket(packetIn)) {
+         throw ThreadQuickExitException.INSTANCE;
+      }
       if (!executor.isOnExecutionThread()) {
          executor.execute(() -> {
             if (processor.getNetworkManager().isChannelOpen()) {

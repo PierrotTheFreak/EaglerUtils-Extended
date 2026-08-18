@@ -33,7 +33,7 @@ public class UiUtilsFabricatePacketScreen extends Screen {
     private ClickType clickType = ClickType.PICKUP;
 
     public UiUtilsFabricatePacketScreen(Screen parent) {
-        super(new StringTextComponent("Fabricate Packet"));
+        super(new StringTextComponent("Fabricate Inventory Packet"));
         this.parent = parent;
     }
 

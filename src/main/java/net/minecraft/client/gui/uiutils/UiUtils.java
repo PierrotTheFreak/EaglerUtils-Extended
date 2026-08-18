@@ -66,7 +66,8 @@ public class UiUtils {
             "Save GUI",
             "Disconnect + Send",
             "Fabricate Packet",
-            "Copy GUI Title JSON"
+            "Copy GUI Title JSON",
+            "Macros"
     };
 
     private UiUtils() {
@@ -382,6 +383,14 @@ public class UiUtils {
 
             case 7:
                 copyGuiTitleJson(screen);
+                break;
+
+            case 8:
+                if (screen.mc != null) {
+                    screen.mc.displayGuiScreen(
+                            new UiUtilsMacroScreen(screen)
+                    );
+                }
                 break;
 
             default:
