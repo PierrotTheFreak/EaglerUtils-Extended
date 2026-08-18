@@ -173,7 +173,7 @@ public class NetworkHandler {
         if (Minecraft.getInstance().player != null
             && Minecraft.getInstance().player.connection != null) {
             UiUtilsPacketManager.tick(
-                Minecraft.getInstance(.player.connection.getNetworkManager()
+                Minecraft.getInstance().player.connection.getNetworkManager()
             );
         }
     
