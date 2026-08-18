@@ -4,8 +4,8 @@ Removing 0 daemon stop events from registry
 Starting a Gradle Daemon (subsequent builds will be faster)
 Starting process 'Gradle build daemon'. Working directory: /home/runner/.gradle/daemon/8.14 Command: /usr/lib/jvm/temurin-17-jdk-amd64/bin/java --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.prefs/java.util.prefs=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.prefs/java.util.prefs=ALL-UNNAMED --add-opens=java.base/java.nio.charset=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.xml/javax.xml.namespace=ALL-UNNAMED -Xms4G -Xmx4G -Dfile.encoding=UTF-8 -Duser.country -Duser.language=en -Duser.variant -cp /home/runner/.gradle/wrapper/dists/gradle-8.14-all/c2qonpi39x1mddn7hk5gh9iqj/gradle-8.14/lib/gradle-daemon-main-8.14.jar -javaagent:/home/runner/.gradle/wrapper/dists/gradle-8.14-all/c2qonpi39x1mddn7hk5gh9iqj/gradle-8.14/lib/agents/gradle-instrumentation-agent-8.14.jar org.gradle.launcher.daemon.bootstrap.GradleDaemon 8.14
 Successfully started process 'Gradle build daemon'
-An attempt to start the daemon took 1.238 secs.
-The client will now receive all logging from the daemon (pid: 2431). The daemon log file: /home/runner/.gradle/daemon/8.14/daemon-2431.out.log
+An attempt to start the daemon took 1.077 secs.
+The client will now receive all logging from the daemon (pid: 2543). The daemon log file: /home/runner/.gradle/daemon/8.14/daemon-2543.out.log
 Starting build in new daemon [memory: 4 GiB]
 Using 4 worker leases.
 Received JVM installation metadata from '/usr/lib/jvm/temurin-17-jdk-amd64': {JAVA_HOME=/usr/lib/jvm/temurin-17-jdk-amd64, JAVA_VERSION=17.0.20, JAVA_VENDOR=Eclipse Adoptium, RUNTIME_NAME=OpenJDK Runtime Environment, RUNTIME_VERSION=17.0.20+8, VM_NAME=OpenJDK 64-Bit Server VM, VM_VERSION=17.0.20+8, VM_VENDOR=Eclipse Adoptium, OS_ARCH=amd64}
@@ -40,22 +40,22 @@ Resolved plugin [id: 'com.resentclient.oss.eaglercraft.build', version: '0.0.0']
 All projects evaluated.
 Task name matched 'makeMainWasmClientBundle'
 Selected primary task 'makeMainWasmClientBundle' from project :
-Starting process 'command '/usr/lib/jvm/temurin-8-jdk-amd64/bin/java''. Working directory: /home/runner/.gradle/.tmp/tmp-jvm14880729678749652447probe Command: /usr/lib/jvm/temurin-8-jdk-amd64/bin/java -Xmx32m -Xms32m -cp . JavaProbe
-Successfully started process 'command '/usr/lib/jvm/temurin-8-jdk-amd64/bin/java''
-Received JVM installation metadata from '/usr/lib/jvm/temurin-8-jdk-amd64': {JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64/jre, JAVA_VERSION=1.8.0_502, JAVA_VENDOR=Temurin, RUNTIME_NAME=OpenJDK Runtime Environment, RUNTIME_VERSION=1.8.0_502-b07, VM_NAME=OpenJDK 64-Bit Server VM, VM_VERSION=25.502-b07, VM_VENDOR=Temurin, OS_ARCH=amd64}
-Starting process 'command '/usr/lib/jvm/temurin-25-jdk-amd64/bin/java''. Working directory: /home/runner/.gradle/.tmp/tmp-jvm5587176413383764444probe Command: /usr/lib/jvm/temurin-25-jdk-amd64/bin/java -Xmx32m -Xms32m -cp . JavaProbe
-Successfully started process 'command '/usr/lib/jvm/temurin-25-jdk-amd64/bin/java''
-Received JVM installation metadata from '/usr/lib/jvm/temurin-25-jdk-amd64': {JAVA_HOME=/usr/lib/jvm/temurin-25-jdk-amd64, JAVA_VERSION=25.0.4, JAVA_VENDOR=Eclipse Adoptium, RUNTIME_NAME=OpenJDK Runtime Environment, RUNTIME_VERSION=25.0.4+7-LTS, VM_NAME=OpenJDK 64-Bit Server VM, VM_VERSION=25.0.4+7-LTS, VM_VENDOR=Eclipse Adoptium, OS_ARCH=amd64}
-Starting process 'command '/usr/lib/jvm/temurin-11-jdk-amd64/bin/java''. Working directory: /home/runner/.gradle/.tmp/tmp-jvm6357161218375269236probe Command: /usr/lib/jvm/temurin-11-jdk-amd64/bin/java -Xmx32m -Xms32m -cp . JavaProbe
-Successfully started process 'command '/usr/lib/jvm/temurin-11-jdk-amd64/bin/java''
-Received JVM installation metadata from '/usr/lib/jvm/temurin-11-jdk-amd64': {JAVA_HOME=/usr/lib/jvm/temurin-11-jdk-amd64, JAVA_VERSION=11.0.32, JAVA_VENDOR=Eclipse Adoptium, RUNTIME_NAME=OpenJDK Runtime Environment, RUNTIME_VERSION=11.0.32+9, VM_NAME=OpenJDK 64-Bit Server VM, VM_VERSION=11.0.32+9, VM_VENDOR=Eclipse Adoptium, OS_ARCH=amd64}
-Starting process 'command '/usr/lib/jvm/temurin-21-jdk-amd64/bin/java''. Working directory: /home/runner/.gradle/.tmp/tmp-jvm10123202444891992445probe Command: /usr/lib/jvm/temurin-21-jdk-amd64/bin/java -Xmx32m -Xms32m -cp . JavaProbe
+Starting process 'command '/usr/lib/jvm/temurin-21-jdk-amd64/bin/java''. Working directory: /home/runner/.gradle/.tmp/tmp-jvm5060088359047793614probe Command: /usr/lib/jvm/temurin-21-jdk-amd64/bin/java -Xmx32m -Xms32m -cp . JavaProbe
 Successfully started process 'command '/usr/lib/jvm/temurin-21-jdk-amd64/bin/java''
 Received JVM installation metadata from '/usr/lib/jvm/temurin-21-jdk-amd64': {JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64, JAVA_VERSION=21.0.12, JAVA_VENDOR=Eclipse Adoptium, RUNTIME_NAME=OpenJDK Runtime Environment, RUNTIME_VERSION=21.0.12+8-LTS, VM_NAME=OpenJDK 64-Bit Server VM, VM_VERSION=21.0.12+8-LTS, VM_VENDOR=Eclipse Adoptium, OS_ARCH=amd64}
+Starting process 'command '/usr/lib/jvm/temurin-25-jdk-amd64/bin/java''. Working directory: /home/runner/.gradle/.tmp/tmp-jvm9993744169644873267probe Command: /usr/lib/jvm/temurin-25-jdk-amd64/bin/java -Xmx32m -Xms32m -cp . JavaProbe
+Successfully started process 'command '/usr/lib/jvm/temurin-25-jdk-amd64/bin/java''
+Received JVM installation metadata from '/usr/lib/jvm/temurin-25-jdk-amd64': {JAVA_HOME=/usr/lib/jvm/temurin-25-jdk-amd64, JAVA_VERSION=25.0.4, JAVA_VENDOR=Eclipse Adoptium, RUNTIME_NAME=OpenJDK Runtime Environment, RUNTIME_VERSION=25.0.4+7-LTS, VM_NAME=OpenJDK 64-Bit Server VM, VM_VERSION=25.0.4+7-LTS, VM_VENDOR=Eclipse Adoptium, OS_ARCH=amd64}
+Starting process 'command '/usr/lib/jvm/temurin-11-jdk-amd64/bin/java''. Working directory: /home/runner/.gradle/.tmp/tmp-jvm8509066413118661043probe Command: /usr/lib/jvm/temurin-11-jdk-amd64/bin/java -Xmx32m -Xms32m -cp . JavaProbe
+Successfully started process 'command '/usr/lib/jvm/temurin-11-jdk-amd64/bin/java''
+Received JVM installation metadata from '/usr/lib/jvm/temurin-11-jdk-amd64': {JAVA_HOME=/usr/lib/jvm/temurin-11-jdk-amd64, JAVA_VERSION=11.0.32, JAVA_VENDOR=Eclipse Adoptium, RUNTIME_NAME=OpenJDK Runtime Environment, RUNTIME_VERSION=11.0.32+9, VM_NAME=OpenJDK 64-Bit Server VM, VM_VERSION=11.0.32+9, VM_VENDOR=Eclipse Adoptium, OS_ARCH=amd64}
+Starting process 'command '/usr/lib/jvm/temurin-8-jdk-amd64/bin/java''. Working directory: /home/runner/.gradle/.tmp/tmp-jvm6976931698744160873probe Command: /usr/lib/jvm/temurin-8-jdk-amd64/bin/java -Xmx32m -Xms32m -cp . JavaProbe
+Successfully started process 'command '/usr/lib/jvm/temurin-8-jdk-amd64/bin/java''
+Received JVM installation metadata from '/usr/lib/jvm/temurin-8-jdk-amd64': {JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64/jre, JAVA_VERSION=1.8.0_502, JAVA_VENDOR=Temurin, RUNTIME_NAME=OpenJDK Runtime Environment, RUNTIME_VERSION=1.8.0_502-b07, VM_NAME=OpenJDK 64-Bit Server VM, VM_VERSION=25.502-b07, VM_VENDOR=Temurin, OS_ARCH=amd64}
 Tasks to be executed: [task ':target_teavm_wasm_gc:compileMainEpk', task ':target_teavm_wasm_gc:compileMainLanguageEpk', task ':target_teavm_wasm_gc:compileMainWasmRuntime', task ':target_teavm_wasm_gc:compileJava', task ':target_teavm_wasm_gc:processResources', task ':target_teavm_wasm_gc:classes', task ':target_teavm_wasm_gc:compileTeavmJava', task ':target_teavm_wasm_gc:processTeavmResources', task ':target_teavm_wasm_gc:teavmClasses', task ':target_teavm_wasm_gc:generateWasmGC', task ':target_teavm_wasm_gc:assembleMainComponents', task ':target_teavm_wasm_gc:makeMainWasmClientBundle']
 Tasks that were excluded: []
 Resolve mutations for :target_teavm_wasm_gc:compileMainEpk (Thread[Execution worker,5,main]) started.
-:target_teavm_wasm_gc:compileMainEpk (Thread[included builds,5,main]) started.
+:target_teavm_wasm_gc:compileMainEpk (Thread[Execution worker,5,main]) started.
 
 > Task :target_teavm_wasm_gc:compileMainEpk
 Caching disabled for task ':target_teavm_wasm_gc:compileMainEpk' because:
@@ -64,7 +64,7 @@ Caching disabled for task ':target_teavm_wasm_gc:compileMainEpk' because:
 Task ':target_teavm_wasm_gc:compileMainEpk' is not up-to-date because:
   No history is available.
 Resolve mutations for :target_teavm_wasm_gc:compileMainLanguageEpk (Thread[included builds,5,main]) started.
-:target_teavm_wasm_gc:compileMainLanguageEpk (Thread[included builds,5,main]) started.
+:target_teavm_wasm_gc:compileMainLanguageEpk (Thread[Execution worker,5,main]) started.
 
 > Task :target_teavm_wasm_gc:compileMainLanguageEpk
 Caching disabled for task ':target_teavm_wasm_gc:compileMainLanguageEpk' because:
@@ -72,8 +72,8 @@ Caching disabled for task ':target_teavm_wasm_gc:compileMainLanguageEpk' because
   Caching has not been enabled for the task
 Task ':target_teavm_wasm_gc:compileMainLanguageEpk' is not up-to-date because:
   No history is available.
-Resolve mutations for :target_teavm_wasm_gc:compileMainWasmRuntime (Thread[Execution worker Thread 3,5,main]) started.
-:target_teavm_wasm_gc:compileMainWasmRuntime (Thread[Execution worker Thread 3,5,main]) started.
+Resolve mutations for :target_teavm_wasm_gc:compileMainWasmRuntime (Thread[Execution worker,5,main]) started.
+:target_teavm_wasm_gc:compileMainWasmRuntime (Thread[Execution worker,5,main]) started.
 
 > Task :target_teavm_wasm_gc:compileMainWasmRuntime
 Caching disabled for task ':target_teavm_wasm_gc:compileMainWasmRuntime' because:
@@ -83,8 +83,8 @@ Task ':target_teavm_wasm_gc:compileMainWasmRuntime' is not up-to-date because:
   No history is available.
 Starting process 'command '/usr/lib/jvm/temurin-17-jdk-amd64/bin/java''. Working directory: /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/target_teavm_wasm_gc Command: /usr/lib/jvm/temurin-17-jdk-amd64/bin/java -Dfile.encoding=UTF-8 -Duser.country -Duser.language=en -Duser.variant -cp /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/target_teavm_wasm_gc/buildtools/closure-compiler.jar com.google.javascript.jscomp.CommandLineRunner --compilation_level ADVANCED_OPTIMIZATIONS --assume_function_wrapper --emit_use_strict --isolation_mode IIFE --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/externs.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/eagruntime_util.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/eagruntime_main.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformApplication.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformAssets.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformAudio.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformFilesystem.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformInput.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformNetworking.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformOpenGL.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformRuntime.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformScreenRecord.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformVoiceClient.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformWebRTC.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/platformWebView.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/clientPlatformSingleplayer.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/serverPlatformSingleplayer.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/WASMGCBufferAllocator.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/fix-webm-duration.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/teavm_runtime.js --js /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/src/wasm-gc-teavm/js/eagruntime_entrypoint.js --js_output_file /home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/target_teavm_wasm_gc/javascript/eagruntime.js
 Successfully started process 'command '/usr/lib/jvm/temurin-17-jdk-amd64/bin/java''
-Resolve mutations for :target_teavm_wasm_gc:compileJava (Thread[Execution worker Thread 3,5,main]) started.
-:target_teavm_wasm_gc:compileJava (Thread[Execution worker Thread 3,5,main]) started.
+Resolve mutations for :target_teavm_wasm_gc:compileJava (Thread[Execution worker,5,main]) started.
+:target_teavm_wasm_gc:compileJava (Thread[Execution worker,5,main]) started.
 
 > Task :target_teavm_wasm_gc:compileJava
 Caching disabled for task ':target_teavm_wasm_gc:compileJava' because:
@@ -101,35 +101,35 @@ Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
-Class dependency analysis for incremental compilation took 0.973 secs.
-Created classpath snapshot for incremental compilation in 0.032 secs.
-Resolve mutations for :target_teavm_wasm_gc:processResources (Thread[Execution worker Thread 3,5,main]) started.
-:target_teavm_wasm_gc:processResources (Thread[Execution worker Thread 3,5,main]) started.
+Class dependency analysis for incremental compilation took 1.438 secs.
+Created classpath snapshot for incremental compilation in 0.033 secs.
+Resolve mutations for :target_teavm_wasm_gc:processResources (Thread[Execution worker,5,main]) started.
+:target_teavm_wasm_gc:processResources (Thread[Execution worker,5,main]) started.
 
 > Task :target_teavm_wasm_gc:processResources NO-SOURCE
 Skipping task ':target_teavm_wasm_gc:processResources' as it has no source files and no previous output files.
-Resolve mutations for :target_teavm_wasm_gc:classes (Thread[included builds,5,main]) started.
-:target_teavm_wasm_gc:classes (Thread[included builds,5,main]) started.
+Resolve mutations for :target_teavm_wasm_gc:classes (Thread[Execution worker Thread 2,5,main]) started.
+:target_teavm_wasm_gc:classes (Thread[Execution worker Thread 2,5,main]) started.
 
 > Task :target_teavm_wasm_gc:classes
 Skipping task ':target_teavm_wasm_gc:classes' as it has no actions.
-Resolve mutations for :target_teavm_wasm_gc:compileTeavmJava (Thread[included builds,5,main]) started.
-:target_teavm_wasm_gc:compileTeavmJava (Thread[included builds,5,main]) started.
+Resolve mutations for :target_teavm_wasm_gc:compileTeavmJava (Thread[Execution worker Thread 2,5,main]) started.
+:target_teavm_wasm_gc:compileTeavmJava (Thread[Execution worker Thread 2,5,main]) started.
 
 > Task :target_teavm_wasm_gc:compileTeavmJava NO-SOURCE
 Skipping task ':target_teavm_wasm_gc:compileTeavmJava' as it has no source files and no previous output files.
-Resolve mutations for :target_teavm_wasm_gc:processTeavmResources (Thread[included builds,5,main]) started.
-:target_teavm_wasm_gc:processTeavmResources (Thread[included builds,5,main]) started.
+Resolve mutations for :target_teavm_wasm_gc:processTeavmResources (Thread[Execution worker,5,main]) started.
+:target_teavm_wasm_gc:processTeavmResources (Thread[Execution worker,5,main]) started.
 
 > Task :target_teavm_wasm_gc:processTeavmResources NO-SOURCE
 Skipping task ':target_teavm_wasm_gc:processTeavmResources' as it has no source files and no previous output files.
-Resolve mutations for :target_teavm_wasm_gc:teavmClasses (Thread[included builds,5,main]) started.
-:target_teavm_wasm_gc:teavmClasses (Thread[included builds,5,main]) started.
+Resolve mutations for :target_teavm_wasm_gc:teavmClasses (Thread[Execution worker,5,main]) started.
+:target_teavm_wasm_gc:teavmClasses (Thread[Execution worker,5,main]) started.
 
 > Task :target_teavm_wasm_gc:teavmClasses UP-TO-DATE
 Skipping task ':target_teavm_wasm_gc:teavmClasses' as it has no actions.
-Resolve mutations for :target_teavm_wasm_gc:generateWasmGC (Thread[included builds,5,main]) started.
-:target_teavm_wasm_gc:generateWasmGC (Thread[included builds,5,main]) started.
+Resolve mutations for :target_teavm_wasm_gc:generateWasmGC (Thread[Execution worker,5,main]) started.
+:target_teavm_wasm_gc:generateWasmGC (Thread[Execution worker Thread 2,5,main]) started.
 
 > Task :target_teavm_wasm_gc:generateWasmGC
 Caching disabled for task ':target_teavm_wasm_gc:generateWasmGC' because:
@@ -139,15 +139,15 @@ Task ':target_teavm_wasm_gc:generateWasmGC' is not up-to-date because:
   No history is available.
 Running TeaVM
 Output file successfully built
-Classes compiled: 11083
-Methods compiled: 70446
-Resolve mutations for :target_teavm_wasm_gc:assembleMainComponents (Thread[included builds,5,main]) started.
-:target_teavm_wasm_gc:assembleMainComponents (Thread[included builds,5,main]) started.
+Classes compiled: 11084
+Methods compiled: 70455
+Resolve mutations for :target_teavm_wasm_gc:assembleMainComponents (Thread[Execution worker Thread 2,5,main]) started.
+:target_teavm_wasm_gc:assembleMainComponents (Thread[Execution worker Thread 2,5,main]) started.
 
 > Task :target_teavm_wasm_gc:assembleMainComponents
 Skipping task ':target_teavm_wasm_gc:assembleMainComponents' as it has no actions.
-Resolve mutations for :target_teavm_wasm_gc:makeMainWasmClientBundle (Thread[included builds,5,main]) started.
-:target_teavm_wasm_gc:makeMainWasmClientBundle (Thread[included builds,5,main]) started.
+Resolve mutations for :target_teavm_wasm_gc:makeMainWasmClientBundle (Thread[Execution worker Thread 2,5,main]) started.
+:target_teavm_wasm_gc:makeMainWasmClientBundle (Thread[Execution worker Thread 2,5,main]) started.
 
 > Task :target_teavm_wasm_gc:makeMainWasmClientBundle
 Caching disabled for task ':target_teavm_wasm_gc:makeMainWasmClientBundle' because:
@@ -206,5 +206,5 @@ Finished.
 Done!
 
 
-BUILD SUCCESSFUL in 3m 44s
+BUILD SUCCESSFUL in 3m 37s
 6 actionable tasks: 6 executed
