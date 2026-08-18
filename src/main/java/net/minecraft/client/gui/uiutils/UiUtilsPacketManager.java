@@ -18,20 +18,32 @@ public class UiUtilsPacketManager {
     private static boolean sendPackets = true;
     private static boolean delayPackets = false;
 
+    /*
+     * Packets currently waiting to be sent.
+     */
     private static final Queue<IPacket<?>> delayedPackets =
             new LinkedList<>();
 
     /*
      * Packet classes selected for Delay Packets.
      *
-     * Starts EMPTY.
+     * Starts completely empty.
+     *
+     * Class<?> is intentional here. In this workspace,
+     * packet.getClass() does not cleanly produce
+     * Class<? extends IPacket<?>>.
      */
-    private static final Set<Class<? extends IPacket<?>>>
-            delayedPacketTypes =
+    private static final Set<Class<?>> delayedPacketTypes =
             new LinkedHashSet<>();
 
     private UiUtilsPacketManager() {
     }
+
+    /*
+     * ------------------------------------------------------------
+     * Global Send / Delay state
+     * ------------------------------------------------------------
+     */
 
     public static boolean isSendPacketsEnabled() {
         return sendPackets;
@@ -45,9 +57,7 @@ public class UiUtilsPacketManager {
         return delayedPackets.size();
     }
 
-    public static void setSendPackets(
-            boolean enabled
-    ) {
+    public static void setSendPackets(boolean enabled) {
         sendPackets = enabled;
     }
 
@@ -60,12 +70,13 @@ public class UiUtilsPacketManager {
             boolean enabled,
             NetworkManager networkManager
     ) {
-        boolean wasEnabled =
-                delayPackets;
+        boolean wasEnabled = delayPackets;
 
-        delayPackets =
-                enabled;
+        delayPackets = enabled;
 
+        /*
+         * Turning Delay Packets OFF releases everything waiting.
+         */
         if (wasEnabled && !enabled) {
             flush(networkManager);
         }
@@ -74,9 +85,11 @@ public class UiUtilsPacketManager {
     public static boolean toggleDelayPackets(
             NetworkManager networkManager
     ) {
-        delayPackets =
-                !delayPackets;
+        delayPackets = !delayPackets;
 
+        /*
+         * Turning Delay Packets OFF flushes the queue.
+         */
         if (!delayPackets) {
             flush(networkManager);
         }
@@ -91,10 +104,10 @@ public class UiUtilsPacketManager {
      */
 
     /**
-     * Returns every packet registered by the actual 1.14 PLAY
-     * protocol as SERVERBOUND.
+     * Returns every packet registered by the actual PLAY protocol
+     * as SERVERBOUND.
      *
-     * No hard-coded packet list.
+     * This is dynamically obtained from the protocol registry.
      */
     public static List<Class<? extends IPacket<?>>>
     getAllPacketClasses() {
@@ -109,31 +122,36 @@ public class UiUtilsPacketManager {
      */
     public static String[] getAllPacketTypes() {
 
-        List<Class<? extends IPacket<?>>> classes =
+        List<Class<? extends IPacket<?>>> packetClasses =
                 getAllPacketClasses();
 
         String[] result =
-                new String[classes.size()];
+                new String[packetClasses.size()];
 
-        for (int i = 0; i < classes.size(); ++i) {
+        for (int i = 0; i < packetClasses.size(); ++i) {
             result[i] =
-                    classes.get(i).getSimpleName();
+                    packetClasses.get(i).getSimpleName();
         }
 
         return result;
     }
 
     /**
-     * Finds a registered packet class by its simple name.
+     * Finds a packet class by its simple class name.
      */
-    private static Class<? extends IPacket<?>>
-    findPacketClass(
+    private static Class<?> findPacketClass(
             String packetName
     ) {
+        if (packetName == null) {
+            return null;
+        }
+
+        List<Class<? extends IPacket<?>>> packetClasses =
+                getAllPacketClasses();
 
         for (
                 Class<? extends IPacket<?>> packetClass
-                        : getAllPacketClasses()
+                        : packetClasses
         ) {
 
             if (
@@ -150,15 +168,17 @@ public class UiUtilsPacketManager {
 
     /*
      * ------------------------------------------------------------
-     * Selection
+     * Packet selection
      * ------------------------------------------------------------
      */
 
+    /**
+     * Returns whether a packet type is currently selected.
+     */
     public static boolean isPacketDelayed(
             String packetName
     ) {
-
-        Class<? extends IPacket<?>> packetClass =
+        Class<?> packetClass =
                 findPacketClass(packetName);
 
         return packetClass != null
@@ -167,87 +187,107 @@ public class UiUtilsPacketManager {
         );
     }
 
+    /**
+     * Returns all currently selected packet names.
+     *
+     * Used by the macro system to save/restore selections.
+     */
+    public static Set<String> getSelectedPacketTypes() {
+
+        Set<String> result =
+                new LinkedHashSet<>();
+
+        for (
+                String packet :
+                        getAllPacketTypes()
+        ) {
+
+            if (isPacketDelayed(packet)) {
+                result.add(packet);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Explicitly selects or deselects a packet.
+     */
     public static void setPacketDelayed(
             String packetName,
             boolean delayed
     ) {
-
-        Class<? extends IPacket<?>> packetClass =
+        Class<?> packetClass =
                 findPacketClass(packetName);
 
         if (packetClass == null) {
             return;
         }
 
+        /*
+         * Keep-alive can NEVER be delayed.
+         */
         if (isKeepAlivePacket(packetClass)) {
-            delayedPacketTypes.remove(
-                    packetClass
-            );
+            delayedPacketTypes.remove(packetClass);
             return;
         }
 
         if (delayed) {
-            delayedPacketTypes.add(
-                    packetClass
-            );
+            delayedPacketTypes.add(packetClass);
         } else {
-            delayedPacketTypes.remove(
-                    packetClass
-            );
+            delayedPacketTypes.remove(packetClass);
         }
     }
 
+    /**
+     * Toggles a packet selection.
+     *
+     * @return true when the packet is now selected.
+     */
     public static boolean togglePacketDelayed(
             String packetName
     ) {
-
-        Class<? extends IPacket<?>> packetClass =
+        Class<?> packetClass =
                 findPacketClass(packetName);
 
         if (packetClass == null) {
             return false;
         }
 
+        /*
+         * Keep-alive can NEVER be delayed.
+         */
         if (isKeepAlivePacket(packetClass)) {
             return false;
         }
 
-        if (delayedPacketTypes.contains(
-                packetClass
-        )) {
-            delayedPacketTypes.remove(
-                    packetClass
-            );
-
+        if (delayedPacketTypes.contains(packetClass)) {
+            delayedPacketTypes.remove(packetClass);
             return false;
         }
 
-        delayedPacketTypes.add(
-                packetClass
-        );
-
+        delayedPacketTypes.add(packetClass);
         return true;
     }
 
     /**
-     * Select every registered PLAY SERVERBOUND packet except
-     * CKeepAlivePacket.
+     * Select every dynamically registered PLAY SERVERBOUND
+     * packet except keep-alive.
      */
     public static void delayAllPackets() {
 
         delayedPacketTypes.clear();
 
+        List<Class<? extends IPacket<?>>> packetClasses =
+                getAllPacketClasses();
+
         for (
                 Class<? extends IPacket<?>> packetClass
-                        : getAllPacketClasses()
+                        : packetClasses
         ) {
 
-            if (!isKeepAlivePacket(
-                    packetClass
-            )) {
-                delayedPacketTypes.add(
-                        packetClass
-                );
+            if (!isKeepAlivePacket(packetClass)) {
+                delayedPacketTypes.add(packetClass);
             }
         }
     }
@@ -265,19 +305,24 @@ public class UiUtilsPacketManager {
      * ------------------------------------------------------------
      */
 
+    /**
+     * Checks a packet class for keep-alive.
+     */
     public static boolean isKeepAlivePacket(
-            Class<? extends IPacket<?>> packetClass
+            Class<?> packetClass
     ) {
-
-        return "CKeepAlivePacket".equals(
+        return packetClass != null
+                && "CKeepAlivePacket".equals(
                 packetClass.getSimpleName()
         );
     }
 
+    /**
+     * Checks a packet name for keep-alive.
+     */
     public static boolean isKeepAlivePacket(
             String packetName
     ) {
-
         return "CKeepAlivePacket".equals(
                 packetName
         );
@@ -285,14 +330,13 @@ public class UiUtilsPacketManager {
 
     /*
      * ------------------------------------------------------------
-     * Packet handling
+     * Packet identification
      * ------------------------------------------------------------
      */
 
     public static String getPacketName(
             IPacket<?> packet
     ) {
-
         if (packet == null) {
             return "";
         }
@@ -301,20 +345,24 @@ public class UiUtilsPacketManager {
                 .getSimpleName();
     }
 
+    /**
+     * Returns whether this actual packet instance is selected
+     * for delay.
+     */
     public static boolean shouldDelayPacket(
             IPacket<?> packet
     ) {
-
         if (packet == null) {
             return false;
         }
 
-        Class<? extends IPacket<?>> packetClass =
+        Class<?> packetClass =
                 packet.getClass();
 
-        if (isKeepAlivePacket(
-                packetClass
-        )) {
+        /*
+         * Keep-alive always gets through.
+         */
+        if (isKeepAlivePacket(packetClass)) {
             return false;
         }
 
@@ -323,31 +371,37 @@ public class UiUtilsPacketManager {
         );
     }
 
+    /*
+     * ------------------------------------------------------------
+     * Outgoing packet interception
+     * ------------------------------------------------------------
+     */
+
     /**
-     * Handles packets at the current UI Utils interception points.
+     * Handles a packet at a UI Utils interception point.
      *
-     * Selected packets are delayed.
-     * Unselected packets are allowed through.
-     * Keep-alive is always allowed through.
+     * @return true if UI Utils consumed the packet and the caller
+     *         must NOT send it normally.
      */
     public static boolean handleOutgoingPacket(
             IPacket<?> packet,
             NetworkManager networkManager
     ) {
-
         if (packet == null) {
             return false;
         }
 
-        if (isKeepAlivePacket(
-                packet.getClass()
-        )) {
+        /*
+         * Keep-alive is NEVER blocked or delayed.
+         */
+        if (isKeepAlivePacket(packet.getClass())) {
             return false;
         }
 
         /*
-         * Send Packets OFF only suppresses packets that are
-         * selected in the UI.
+         * Send Packets OFF:
+         *
+         * Only selected packet types are blocked.
          */
         if (
                 !sendPackets
@@ -357,32 +411,55 @@ public class UiUtilsPacketManager {
         }
 
         /*
-         * Delay only selected packet classes.
+         * Delay Packets ON:
+         *
+         * Only selected packet types are queued.
          */
         if (
                 delayPackets
                         && shouldDelayPacket(packet)
         ) {
-            delayedPackets.add(
-                    packet
-            );
+
+            delayedPackets.add(packet);
 
             return true;
         }
 
+        /*
+         * Packet wasn't consumed.
+         * Let the normal caller send it.
+         */
         return false;
+    }
+
+    /**
+     * Compatibility method for PlayerController's special
+     * interaction packets.
+     *
+     * Uses the same selection/delay logic as normal packets.
+     */
+    public static boolean handleSpecialOutgoingPacket(
+            IPacket<?> packet,
+            NetworkManager networkManager
+    ) {
+        return handleOutgoingPacket(
+                packet,
+                networkManager
+        );
     }
 
     /*
      * ------------------------------------------------------------
-     * Queue
+     * Queue management
      * ------------------------------------------------------------
      */
 
+    /**
+     * Sends every queued packet in FIFO order.
+     */
     public static void flush(
             NetworkManager networkManager
     ) {
-
         if (networkManager == null) {
             delayedPackets.clear();
             return;
@@ -394,18 +471,24 @@ public class UiUtilsPacketManager {
                     delayedPackets.poll();
 
             /*
-             * This is intentionally a direct send so the packet
-             * doesn't immediately get queued again.
+             * Send through the NetworkManager entry point.
              */
-            networkManager.sendPacket(
-                    packet
-            );
+            networkManager.sendPacket(packet);
         }
     }
 
+    /**
+     * Discards the current queue.
+     */
     public static void clearQueue() {
         delayedPackets.clear();
     }
+
+    /*
+     * ------------------------------------------------------------
+     * Disconnect + Send
+     * ------------------------------------------------------------
+     */
 
     public static void disconnectAndSend(
             ClientPlayerEntity player
@@ -428,10 +511,16 @@ public class UiUtilsPacketManager {
             return;
         }
 
+        /*
+         * Send everything currently waiting.
+         */
         flush(networkManager);
 
         clearQueue();
 
+        /*
+         * Disconnect after flushing.
+         */
         networkManager.closeChannel(
                 new StringTextComponent(
                         "UI Utils: Disconnect and Send"
@@ -439,40 +528,22 @@ public class UiUtilsPacketManager {
         );
     }
 
-
-    public static Set<String> getSelectedPacketTypes() {
-        Set<String> result =
-                new LinkedHashSet<>();
-    
-        for (
-                String packet :
-                        getAllPacketTypes()
-        ) {
-            if (isPacketDelayed(packet)) {
-                result.add(packet);
-            }
-        }
-    
-        return result;
-    }
-
-
-
-
-
-
-
-
     /*
      * ------------------------------------------------------------
      * Search
      * ------------------------------------------------------------
      */
 
+    /**
+     * Used by the packet settings screen.
+     */
     public static boolean packetMatchesSearch(
             String packetName,
             String search
     ) {
+        if (packetName == null) {
+            return false;
+        }
 
         if (
                 search == null
