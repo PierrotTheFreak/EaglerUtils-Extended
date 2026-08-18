@@ -13,7 +13,7 @@ import java.util.Queue;
 import java.util.LinkedList;
 import java.util.Set;
 
-public class UiUtilsPacketManager {
+public class UiUtils {
 
     private static boolean sendPackets = true;
     private static boolean delayPackets = false;
@@ -27,12 +27,10 @@ public class UiUtilsPacketManager {
     /*
      * Packet classes selected for Delay Packets.
      *
-     * IMPORTANT:
-     * Starts completely empty.
+     * This starts empty.
      *
-     * We use Class<?> instead of Class<? extends IPacket<?>> because
-     * Java's generic type information for packet.getClass() is raw
-     * in this workspace.
+     * Class<?> is used here because packet.getClass() produces a
+     * raw-ish generic type in this Eaglercraft workspace.
      */
     private static final Set<Class<?>> delayedPacketTypes =
             new LinkedHashSet<>();
@@ -145,6 +143,10 @@ public class UiUtilsPacketManager {
     private static Class<?> findPacketClass(
             String packetName
     ) {
+        if (packetName == null) {
+            return null;
+        }
+
         List<Class<? extends IPacket<?>>> packetClasses =
                 getAllPacketClasses();
 
@@ -184,6 +186,30 @@ public class UiUtilsPacketManager {
                 && delayedPacketTypes.contains(
                 packetClass
         );
+    }
+
+    /**
+     * Returns the names of all currently selected packet types.
+     *
+     * Used by the macro system to temporarily save the current
+     * Delay Packets selection before a macro changes it.
+     */
+    public static Set<String> getSelectedPacketTypes() {
+
+        Set<String> result =
+                new LinkedHashSet<>();
+
+        for (
+                String packet :
+                        getAllPacketTypes()
+        ) {
+
+            if (isPacketDelayed(packet)) {
+                result.add(packet);
+            }
+        }
+
+        return result;
     }
 
     /**
@@ -415,9 +441,6 @@ public class UiUtilsPacketManager {
     /**
      * Compatibility method for PlayerController's special
      * interaction packets.
-     *
-     * Right now it uses the exact same selection logic as normal
-     * outgoing packets.
      */
     public static boolean handleSpecialOutgoingPacket(
             IPacket<?> packet,
@@ -452,16 +475,12 @@ public class UiUtilsPacketManager {
                     delayedPackets.poll();
 
             /*
-             * IMPORTANT:
+             * For the current Eaglercraft workspace, this is the
+             * available NetworkManager send entry point.
              *
-             * NetworkManager.sendPacket() may itself be hooked later.
-             * This direct path exists specifically so queue flushing
-             * does not immediately put the same packet back into the
-             * queue.
-             *
-             * For the current Eagler workspace, sendPacket() is still
-             * the transport entry point, so this remains the actual
-             * send call used by the workspace.
+             * We will replace this with a direct transport path
+             * when we move packet interception into the central
+             * networking layer.
              */
             networkManager.sendPacket(packet);
         }
@@ -531,6 +550,12 @@ public class UiUtilsPacketManager {
             String packetName,
             String search
     ) {
+        if (
+                packetName == null
+        ) {
+            return false;
+        }
+
         if (
                 search == null
                         || search.trim().isEmpty()
