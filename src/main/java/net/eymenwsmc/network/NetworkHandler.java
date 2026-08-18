@@ -19,6 +19,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.uiutils.UiUtilsPacketManager;
+
 /**
  * Nodejs handler
  * @author eymenwsmc
@@ -167,6 +172,13 @@ public class NetworkHandler {
     }
 
     public static void tick() {
+        if (Minecraft.getInstance().player != null
+            && Minecraft,getInstance().player.connection != null) {
+            UiUtilsPacketManager.tick(
+                Minecraft.getInstance(.player.connection.getNetworkManager()
+            );
+        }
+    
         if (webSocket == null) {
             return;
         }
