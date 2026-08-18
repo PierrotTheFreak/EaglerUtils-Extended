@@ -257,20 +257,70 @@ public class PlayerController {
          return ActionResultType.FAIL;
       } else {
          ItemStack itemstack = p_217292_1_.getHeldItem(p_217292_3_);
+
          if (this.currentGameType == GameType.SPECTATOR) {
-            this.connection.sendPacket(new CPlayerTryUseItemOnBlockPacket(p_217292_3_, p_217292_4_));
+            CPlayerTryUseItemOnBlockPacket packet =
+                  new CPlayerTryUseItemOnBlockPacket(
+                        p_217292_3_,
+                        p_217292_4_
+                  );
+
+            if (!UiUtilsPacketManager.handleSpecialOutgoingPacket(
+                  packet,
+                  this.connection.getNetworkManager()
+            )) {
+               this.connection.sendPacket(packet);
+            }
+
             return ActionResultType.SUCCESS;
          } else {
             boolean flag = !p_217292_1_.getHeldItemMainhand().isEmpty() || !p_217292_1_.getHeldItemOffhand().isEmpty();
             boolean flag1 = p_217292_1_.isSneaking() && flag;
-            if (!flag1 && p_217292_2_.getBlockState(blockpos).onBlockActivated(p_217292_2_, p_217292_1_, p_217292_3_, p_217292_4_)) {
-               this.connection.sendPacket(new CPlayerTryUseItemOnBlockPacket(p_217292_3_, p_217292_4_));
+
+            if (!flag1 && p_217292_2_.getBlockState(blockpos).onBlockActivated(
+                  p_217292_2_,
+                  p_217292_1_,
+                  p_217292_3_,
+                  p_217292_4_
+            )) {
+               CPlayerTryUseItemOnBlockPacket packet =
+                     new CPlayerTryUseItemOnBlockPacket(
+                           p_217292_3_,
+                           p_217292_4_
+                     );
+
+               if (!UiUtilsPacketManager.handleSpecialOutgoingPacket(
+                     packet,
+                     this.connection.getNetworkManager()
+               )) {
+                  this.connection.sendPacket(packet);
+               }
+
                return ActionResultType.SUCCESS;
             } else {
-               this.connection.sendPacket(new CPlayerTryUseItemOnBlockPacket(p_217292_3_, p_217292_4_));
+               CPlayerTryUseItemOnBlockPacket packet =
+                     new CPlayerTryUseItemOnBlockPacket(
+                           p_217292_3_,
+                           p_217292_4_
+                     );
+
+               if (!UiUtilsPacketManager.handleSpecialOutgoingPacket(
+                     packet,
+                     this.connection.getNetworkManager()
+               )) {
+                  this.connection.sendPacket(packet);
+               }
+
                if (!itemstack.isEmpty() && !p_217292_1_.getCooldownTracker().hasCooldown(itemstack.getItem())) {
-                  ItemUseContext itemusecontext = new ItemUseContext(p_217292_1_, p_217292_3_, p_217292_4_);
+                  ItemUseContext itemusecontext =
+                        new ItemUseContext(
+                              p_217292_1_,
+                              p_217292_3_,
+                              p_217292_4_
+                        );
+
                   ActionResultType actionresulttype;
+
                   if (this.currentGameType.isCreative()) {
                      int i = itemstack.getCount();
                      actionresulttype = itemstack.onItemUse(itemusecontext);
@@ -311,7 +361,7 @@ public class PlayerController {
    }
 
    public ClientPlayerEntity createPlayer(ClientWorld p_199681_1_, StatisticsManager p_199681_2_, ClientRecipeBook p_199681_3_) {
-      return new ClientPlayerEntity(this.mc, p_199681_1_, this.connection, p_199681_2_, p_199681_3_);
+      return new ClientPlayerEntity(this.mc, this.connection, p_199681_2_, p_199681_3_);
    }
 
    public void attackEntity(PlayerEntity playerIn, Entity targetEntity) {
@@ -339,16 +389,22 @@ public class PlayerController {
 
    public ItemStack windowClick(int windowId, int slotId, int mouseButton, ClickType type, PlayerEntity player) {
       short short1 = player.openContainer.getNextTransactionID(player.inventory);
-      ItemStack itemstack = player.openContainer.slotClick(slotId, mouseButton, type, player);
-
-      CClickWindowPacket packet = new CClickWindowPacket(
-            windowId,
+      ItemStack itemstack = player.openContainer.slotClick(
             slotId,
             mouseButton,
             type,
-            itemstack,
-            short1
+            player
       );
+
+      CClickWindowPacket packet =
+            new CClickWindowPacket(
+                  windowId,
+                  slotId,
+                  mouseButton,
+                  type,
+                  itemstack,
+                  short1
+            );
 
       if (!UiUtilsPacketManager.handleOutgoingPacket(
             packet,
@@ -361,14 +417,21 @@ public class PlayerController {
    }
 
    public void func_203413_a(int p_203413_1_, IRecipe<?> p_203413_2_, boolean p_203413_3_) {
-      this.connection.sendPacket(new CPlaceRecipePacket(p_203413_1_, p_203413_2_, p_203413_3_));
+      this.connection.sendPacket(
+            new CPlaceRecipePacket(
+                  p_203413_1_,
+                  p_203413_2_,
+                  p_203413_3_
+            )
+      );
    }
 
    public void sendEnchantPacket(int windowID, int button) {
-      CEnchantItemPacket packet = new CEnchantItemPacket(
-            windowID,
-            button
-      );
+      CEnchantItemPacket packet =
+            new CEnchantItemPacket(
+                  windowID,
+                  button
+            );
 
       if (!UiUtilsPacketManager.handleOutgoingPacket(
             packet,
@@ -380,21 +443,37 @@ public class PlayerController {
 
    public void sendSlotPacket(ItemStack itemStackIn, int slotId) {
       if (this.currentGameType.isCreative()) {
-         this.connection.sendPacket(new CCreativeInventoryActionPacket(slotId, itemStackIn));
+         this.connection.sendPacket(
+               new CCreativeInventoryActionPacket(
+                     slotId,
+                     itemStackIn
+               )
+         );
       }
 
    }
 
    public void sendPacketDropItem(ItemStack itemStackIn) {
       if (this.currentGameType.isCreative() && !itemStackIn.isEmpty()) {
-         this.connection.sendPacket(new CCreativeInventoryActionPacket(-1, itemStackIn));
+         this.connection.sendPacket(
+               new CCreativeInventoryActionPacket(
+                     -1,
+                     itemStackIn
+               )
+         );
       }
 
    }
 
    public void onStoppedUsingItem(PlayerEntity playerIn) {
       this.syncCurrentPlayItem();
-      this.connection.sendPacket(new CPlayerDiggingPacket(CPlayerDiggingPacket.Action.RELEASE_USE_ITEM, BlockPos.ZERO, Direction.DOWN));
+      this.connection.sendPacket(
+            new CPlayerDiggingPacket(
+                  CPlayerDiggingPacket.Action.RELEASE_USE_ITEM,
+                  BlockPos.ZERO,
+                  Direction.DOWN
+            )
+      );
       playerIn.stopActiveHand();
    }
 
@@ -415,7 +494,9 @@ public class PlayerController {
    }
 
    public boolean isRidingHorse() {
-      return this.mc.player.isPassenger() && this.mc.player.getRidingEntity() instanceof AbstractHorseEntity;
+      return this.mc.player.isPassenger()
+            && this.mc.player.getRidingEntity()
+            instanceof AbstractHorseEntity;
    }
 
    public boolean isSpectatorMode() {
@@ -434,26 +515,85 @@ public class PlayerController {
       this.connection.sendPacket(new CPickItemPacket(index));
    }
 
-   private void func_225324_a(CPlayerDiggingPacket.Action p_225324_1_, BlockPos p_225324_2_, Direction p_225324_3_) {
+   private void func_225324_a(
+         CPlayerDiggingPacket.Action p_225324_1_,
+         BlockPos p_225324_2_,
+         Direction p_225324_3_
+   ) {
       ClientPlayerEntity clientplayerentity = this.mc.player;
-      this.field_225326_k.put(Pair.of(p_225324_2_, p_225324_1_), new PosAndRotation(clientplayerentity.getPositionVec(), clientplayerentity.rotationPitch, clientplayerentity.rotationYaw));
-      this.connection.sendPacket(new CPlayerDiggingPacket(p_225324_1_, p_225324_2_, p_225324_3_));
+
+      this.field_225326_k.put(
+            Pair.of(
+                  p_225324_2_,
+                  p_225324_1_
+            ),
+            new PosAndRotation(
+                  clientplayerentity.getPositionVec(),
+                  clientplayerentity.rotationPitch,
+                  clientplayerentity.rotationYaw
+            )
+      );
+
+      this.connection.sendPacket(
+            new CPlayerDiggingPacket(
+                  p_225324_1_,
+                  p_225324_2_,
+                  p_225324_3_
+            )
+      );
    }
 
-   public void func_225323_a(ClientWorld p_225323_1_, BlockPos p_225323_2_, BlockState p_225323_3_, CPlayerDiggingPacket.Action p_225323_4_, boolean p_225323_5_) {
-      PosAndRotation posandrotation = this.field_225326_k.remove(Pair.of(p_225323_2_, p_225323_4_));
-      if (posandrotation == null || !p_225323_5_ || p_225323_4_ != CPlayerDiggingPacket.Action.START_DESTROY_BLOCK && p_225323_1_.getBlockState(p_225323_2_) != p_225323_3_) {
-         p_225323_1_.invalidateRegionAndSetBlock(p_225323_2_, p_225323_3_);
+   public void func_225323_a(
+         ClientWorld p_225323_1_,
+         BlockPos p_225323_2_,
+         BlockState p_225323_3_,
+         CPlayerDiggingPacket.Action p_225323_4_,
+         boolean p_225323_5_
+   ) {
+      PosAndRotation posandrotation =
+            this.field_225326_k.remove(
+                  Pair.of(
+                        p_225323_2_,
+                        p_225323_4_
+                  )
+            );
+
+      if (posandrotation == null
+            || !p_225323_5_
+            || p_225323_4_
+                  != CPlayerDiggingPacket.Action.START_DESTROY_BLOCK
+            && p_225323_1_.getBlockState(p_225323_2_)
+                  != p_225323_3_) {
+
+         p_225323_1_.invalidateRegionAndSetBlock(
+               p_225323_2_,
+               p_225323_3_
+         );
+
          if (posandrotation != null) {
-            Vec3d vec3d = posandrotation.func_224783_a();
-            this.mc.player.setPositionAndRotation(vec3d.x, vec3d.y, vec3d.z, posandrotation.func_224785_c(), posandrotation.func_224784_b());
+            Vec3d vec3d =
+                  posandrotation.func_224783_a();
+
+            this.mc.player.setPositionAndRotation(
+                  vec3d.x,
+                  vec3d.y,
+                  vec3d.z,
+                  posandrotation.func_224785_c(),
+                  posandrotation.func_224784_b()
+            );
          }
       }
 
-      while(this.field_225326_k.size() >= 50) {
-         Pair<BlockPos, CPlayerDiggingPacket.Action> pair = this.field_225326_k.firstKey();
+      while (this.field_225326_k.size() >= 50) {
+         Pair<BlockPos, CPlayerDiggingPacket.Action> pair =
+               this.field_225326_k.firstKey();
+
          this.field_225326_k.removeFirst();
-         field_225325_a.error("Too many unacked block actions, dropping " + pair);
+
+         field_225325_a.error(
+               "Too many unacked block actions, dropping "
+               + pair
+         );
       }
 
    }
