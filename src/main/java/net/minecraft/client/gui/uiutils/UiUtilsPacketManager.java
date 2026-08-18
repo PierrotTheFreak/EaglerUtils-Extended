@@ -15,18 +15,16 @@ import java.util.Set;
 
 /** Central packet state for UI Utils, including selectable directional delay queues. */
 public final class UiUtilsPacketManager {
-    private static boolean sendPackets = true;
+    private static boolean sendPackets=true;
     private static boolean delayPackets;
-    private static long delayMilliseconds = 250L;
-    private static final Queue<DelayedOutgoing> delayedPackets = new LinkedList<>();
-    private static final Queue<DelayedIncoming> delayedIncomingTasks = new LinkedList<>();
-    private static final Set<Class<?>> serverboundSelection = new LinkedHashSet<>();
-    private static final Set<Class<?>> clientboundSelection = new LinkedHashSet<>();
-
+    private static long delayMilliseconds=250L;
+    private static final Queue<DelayedOutgoing> delayedPackets=new LinkedList<>();
+    private static final Queue<DelayedIncoming> delayedIncomingTasks=new LinkedList<>();
+    private static final Set<Class<?>> serverboundSelection=new LinkedHashSet<>();
+    private static final Set<Class<?>> clientboundSelection=new LinkedHashSet<>();
     private static final class DelayedOutgoing { final IPacket<?> packet; final long releaseAt; DelayedOutgoing(IPacket<?> p,long t){packet=p;releaseAt=t;} }
     private static final class DelayedIncoming { final Runnable task; final long releaseAt; DelayedIncoming(Runnable r,long t){task=r;releaseAt=t;} }
-
-    private UiUtilsPacketManager() {}
+    private UiUtilsPacketManager(){}
     public static boolean isSendPacketsEnabled(){return sendPackets;}
     public static boolean isDelayPacketsEnabled(){return delayPackets;}
     public static int getDelayedPacketCount(){return delayedPackets.size();}
@@ -65,7 +63,14 @@ public final class UiUtilsPacketManager {
     public static IPacket<?> pollDelayedIncomingPacket(){return null;}
     public static boolean handleOutgoingPacket(IPacket<?> packet,NetworkManager networkManager){if(packet==null||isKeepAlivePacket(packet.getClass()))return false;UiUtilsPacketInspector.record(packet,PacketDirection.SERVERBOUND);UiUtilsPacketReplay.record(packet,PacketDirection.SERVERBOUND);if(!sendPackets&&shouldDelayPacket(packet))return true;if(delayPackets&&shouldDelayPacket(packet)){delayedPackets.add(new DelayedOutgoing(packet,System.currentTimeMillis()+delayMilliseconds));return true;}return false;}
     public static boolean handleSpecialOutgoingPacket(IPacket<?> packet,NetworkManager networkManager){return handleOutgoingPacket(packet,networkManager);}
-    public static void tick(NetworkManager networkManager){if(!delayPackets)return;long now=System.currentTimeMillis();if(networkManager!=null)while(!delayedPackets.isEmpty()&&delayedPackets.peek().releaseAt<=now)networkManager.sendPacket(delayedPackets.poll().packet);while(!delayedIncomingTasks.isEmpty()&&delayedIncomingTasks.peek().releaseAt<=now){Runnable task=delayedIncomingTasks.poll().task;if(task!=null)task.run();}}
+    public static void tick(NetworkManager networkManager){
+        long now=System.currentTimeMillis();
+        if(delayPackets){
+            if(networkManager!=null)while(!delayedPackets.isEmpty()&&delayedPackets.peek().releaseAt<=now)networkManager.sendPacket(delayedPackets.poll().packet);
+            while(!delayedIncomingTasks.isEmpty()&&delayedIncomingTasks.peek().releaseAt<=now){Runnable task=delayedIncomingTasks.poll().task;if(task!=null)task.run();}
+        }
+        UiUtilsMacroManager.tick();
+    }
     public static void flush(NetworkManager networkManager){if(networkManager==null){delayedPackets.clear();return;}while(!delayedPackets.isEmpty())networkManager.sendPacket(delayedPackets.poll().packet);}
     public static void flushIncomingPackets(){while(!delayedIncomingTasks.isEmpty()){Runnable task=delayedIncomingTasks.poll().task;if(task!=null)task.run();}}
     public static void clearQueue(){delayedPackets.clear();delayedIncomingTasks.clear();}
