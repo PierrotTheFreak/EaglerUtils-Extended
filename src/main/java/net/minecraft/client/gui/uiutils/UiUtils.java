@@ -480,6 +480,24 @@ public class UiUtils {
         return false;
     }
 
+    private static String getSendPacketsText() {
+        return "Send Packets: "
+                + (
+                UiUtilsPacketManager.isSendPacketsEnabled()
+                        ? "ON"
+                        : "OFF"
+        );
+    }
+
+    private static String getDelayPacketsText() {
+        return "Delay Packets: "
+                + (
+                UiUtilsPacketManager.isDelayPacketsEnabled()
+                        ? "ON"
+                        : "OFF"
+        );
+    }
+
     /*
      * ------------------------------------------------------------
      * Rendering
