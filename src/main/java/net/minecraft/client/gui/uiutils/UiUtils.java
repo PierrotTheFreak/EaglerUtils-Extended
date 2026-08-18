@@ -1,4 +1,4 @@
-package net.minecraft.client.gui.uiutils;
+    package net.minecraft.client.gui.uiutils;
 
 import net.lax1dude.eaglercraft.EagRuntime;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
@@ -114,9 +114,7 @@ public class UiUtils {
                     inputY,
                     CONTROL_WIDTH,
                     CHAT_INPUT_HEIGHT,
-                    new net.minecraft.util.text.StringTextComponent(
-                            "Chat"
-                    )
+                    "Chat"
             );
 
             chatInput.setMaxStringLength(256);
@@ -719,7 +717,7 @@ public class UiUtils {
                             chatInput.x,
                             chatInput.y,
                             chatInput.getWidth(),
-                            chatInput.getHeight()
+                            CHAT_INPUT_HEIGHT
                     )
             ) {
                 chatInput.setFocused(true);
@@ -944,19 +942,11 @@ public class UiUtils {
             );
 
             /*
-             * Macro UI.
+             * Macro UI is handled by the macro screens themselves.
              *
-             * This is deliberately delegated to the macro manager
-             * so UiUtils itself does not need to know how macros
-             * are stored or edited.
+             * The current UiUtilsMacroManager does not expose a
+             * render(...) method, so do not call it here.
              */
-            UiUtilsMacroManager.render(
-                    screen,
-                    font,
-                    mouseX,
-                    mouseY,
-                    partialTicks
-            );
         }
 
         /*
