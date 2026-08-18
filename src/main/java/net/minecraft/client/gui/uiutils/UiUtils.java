@@ -1,11 +1,17 @@
 package net.minecraft.client.gui.uiutils;
 
+import net.lax1dude.eaglercraft.EagRuntime;
+import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.network.play.client.CCloseWindowPacket;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.client.gui.uiutils.UiUtilsSavedGui;
+import net.minecraft.client.gui.uiutils.UiUtilsFabricatePacketScreen;
 
 public class UiUtils {
 
@@ -18,6 +24,8 @@ public class UiUtils {
 
     private static final int CHAT_INPUT_HEIGHT = 20;
     private static final int CHAT_INPUT_SPACING = 6;
+
+    private static final int STATUS_HEIGHT = 24;
 
     private static TextFieldWidget chatInput;
 
@@ -32,17 +40,16 @@ public class UiUtils {
             return;
         }
 
-        int y = PANEL_Y + 18;
-
         /*
-         * Container buttons
+         * UI Utils container controls.
          */
         if (screen instanceof ContainerScreen) {
+            int y = PANEL_Y + 18;
 
             addButton(screen, "Close Without Packet", y, new Button.IPressable() {
                 @Override
                 public void onPress(Button button) {
-                    // TODO: Close current container without sending close packet
+                    closeWithoutPacket(screen);
                 }
             });
             y += BUTTON_SPACING;
@@ -50,7 +57,7 @@ public class UiUtils {
             addButton(screen, "De-sync", y, new Button.IPressable() {
                 @Override
                 public void onPress(Button button) {
-                    // TODO: Implement server/client container desync
+                    desync(screen);
                 }
             });
             y += BUTTON_SPACING;
@@ -58,7 +65,7 @@ public class UiUtils {
             addButton(screen, "Send Packets", y, new Button.IPressable() {
                 @Override
                 public void onPress(Button button) {
-                    // TODO: Implement packet sending
+                    UiUtilsPacketManager.toggleSendPackets();
                 }
             });
             y += BUTTON_SPACING;
@@ -66,7 +73,7 @@ public class UiUtils {
             addButton(screen, "Delay Packets", y, new Button.IPressable() {
                 @Override
                 public void onPress(Button button) {
-                    // TODO: Implement packet delay
+                    toggleDelayPackets(screen);
                 }
             });
             y += BUTTON_SPACING;
@@ -74,7 +81,7 @@ public class UiUtils {
             addButton(screen, "Save GUI", y, new Button.IPressable() {
                 @Override
                 public void onPress(Button button) {
-                    // TODO: Implement GUI saving
+                    UiUtilsSavedGui.save(screen);
                 }
             });
             y += BUTTON_SPACING;
@@ -82,7 +89,7 @@ public class UiUtils {
             addButton(screen, "Disconnect + Send", y, new Button.IPressable() {
                 @Override
                 public void onPress(Button button) {
-                    // TODO: Implement disconnect + packet sending
+                    disconnectAndSend(screen);
                 }
             });
             y += BUTTON_SPACING;
@@ -90,7 +97,9 @@ public class UiUtils {
             addButton(screen, "Fabricate Packet", y, new Button.IPressable() {
                 @Override
                 public void onPress(Button button) {
-                    // TODO: Implement packet fabrication
+                    screen.mc.displayGuiScreen(
+                            new UiUtilsFabricatePacketScreen(screen)
+                    );
                 }
             });
             y += BUTTON_SPACING;
@@ -98,18 +107,18 @@ public class UiUtils {
             addButton(screen, "Copy GUI Title JSON", y, new Button.IPressable() {
                 @Override
                 public void onPress(Button button) {
-                    // TODO: Implement GUI title JSON copying
+                    copyGuiTitleJson(screen);
                 }
             });
             y += BUTTON_SPACING;
 
             /*
-             * Chat input
+             * Chat input.
              */
             y += CHAT_INPUT_SPACING;
 
             chatInput = new TextFieldWidget(
-                screen.getUiUtilsFontRenderer(),
+                    screen.mc.fontRenderer,
                     PANEL_X + 2,
                     y,
                     PANEL_WIDTH - 4,
@@ -142,8 +151,96 @@ public class UiUtils {
         );
     }
 
+    /**
+     * Closes the current container locally without sending CCloseWindowPacket.
+     */
+    private static void closeWithoutPacket(Screen screen) {
+        if (!(screen instanceof ContainerScreen)) {
+            return;
+        }
+
+        if (screen.mc == null || screen.mc.player == null) {
+            return;
+        }
+
+        if (screen.mc.player instanceof ClientPlayerEntity) {
+            ((ClientPlayerEntity) screen.mc.player).closeScreenAndDropStack();
+        }
+    }
+
+    /**
+     * Sends CCloseWindowPacket to the server while keeping the current
+     * container GUI open on the client.
+     */
+    private static void desync(Screen screen) {
+        if (!(screen instanceof ContainerScreen)) {
+            return;
+        }
+
+        if (screen.mc == null || screen.mc.player == null) {
+            return;
+        }
+
+        ClientPlayerEntity player = screen.mc.player;
+
+        player.connection.sendPacket(
+                new CCloseWindowPacket(
+                        player.openContainer.windowId
+                )
+        );
+    }
+
+    /**
+     * Toggles packet delaying. Turning it off flushes the packet queue.
+     */
+    private static void toggleDelayPackets(Screen screen) {
+        if (screen.mc == null || screen.mc.player == null) {
+            return;
+        }
+
+        UiUtilsPacketManager.toggleDelayPackets(
+                screen.mc.player.connection.getNetworkManager()
+        );
+    }
+
+    /**
+     * Sends queued packets and then closes the network connection.
+     */
+    private static void disconnectAndSend(Screen screen) {
+        if (screen.mc == null || screen.mc.player == null) {
+            return;
+        }
+
+        UiUtilsPacketManager.disconnectAndSend(screen.mc.player);
+    }
+
+    /**
+     * Serializes the current GUI title using the workspace's native
+     * ITextComponent JSON serializer and copies it to the Eaglercraft
+     * clipboard.
+     */
+    private static void copyGuiTitleJson(Screen screen) {
+        if (!(screen instanceof ContainerScreen)) {
+            return;
+        }
+
+        if (screen.getTitle() == null) {
+            return;
+        }
+
+        try {
+            ITextComponent title = screen.getTitle();
+
+            String json = ITextComponent.Serializer.toJson(title);
+
+            EagRuntime.setClipboard(json);
+        } catch (Throwable throwable) {
+            EagRuntime.debugPrintStackTrace(throwable);
+        }
+    }
+
     public static TextFieldWidget getChatInput() {
-      return chatInput;
+        return chatInput;
     }
 
     public static void tick() {
@@ -163,7 +260,7 @@ public class UiUtils {
         }
 
         /*
-         * Enter / Numpad Enter
+         * Enter / Numpad Enter.
          */
         if (keyCode == 257 || keyCode == 335) {
             String message = chatInput.getText().trim();
@@ -176,7 +273,11 @@ public class UiUtils {
             return true;
         }
 
-        return chatInput.keyPressed(keyCode, scanCode, modifiers);
+        return chatInput.keyPressed(
+                keyCode,
+                scanCode,
+                modifiers
+        );
     }
 
     public static boolean charTyped(
@@ -188,7 +289,10 @@ public class UiUtils {
             return false;
         }
 
-        return chatInput.charTyped(codePoint, modifiers);
+        return chatInput.charTyped(
+                codePoint,
+                modifiers
+        );
     }
 
     public static boolean mouseClicked(
@@ -198,7 +302,11 @@ public class UiUtils {
             int button
     ) {
         if (chatInput != null) {
-            if (chatInput.mouseClicked(mouseX, mouseY, button)) {
+            if (chatInput.mouseClicked(
+                    mouseX,
+                    mouseY,
+                    button
+            )) {
                 return true;
             }
         }
@@ -223,14 +331,20 @@ public class UiUtils {
             buttonCount = 8;
         }
 
-        int panelHeight = 22 + (buttonCount * BUTTON_SPACING);
+        int panelHeight =
+                22
+                + (buttonCount * BUTTON_SPACING);
 
         if (screen instanceof ContainerScreen && chatInput != null) {
             panelHeight += CHAT_INPUT_SPACING + CHAT_INPUT_HEIGHT;
         }
 
+        if (screen instanceof ContainerScreen) {
+            panelHeight += STATUS_HEIGHT;
+        }
+
         /*
-         * Panel background
+         * Panel background.
          */
         screen.fill(
                 PANEL_X - 2,
@@ -241,7 +355,7 @@ public class UiUtils {
         );
 
         /*
-         * Title
+         * Title.
          */
         screen.drawString(
                 font,
@@ -252,7 +366,63 @@ public class UiUtils {
         );
 
         /*
-         * Chat label
+         * Container status.
+         */
+        if (screen instanceof ContainerScreen) {
+            int statusY = PANEL_Y + panelHeight - STATUS_HEIGHT + 2;
+
+            String sendState =
+                    "Send: "
+                    + (UiUtilsPacketManager.isSendPacketsEnabled()
+                    ? "ON"
+                    : "OFF");
+
+            String delayState =
+                    "Delay: "
+                    + (UiUtilsPacketManager.isDelayPacketsEnabled()
+                    ? "ON"
+                    : "OFF");
+
+            screen.drawString(
+                    font,
+                    sendState,
+                    PANEL_X + 4,
+                    statusY,
+                    UiUtilsPacketManager.isSendPacketsEnabled()
+                            ? 0x55FF55
+                            : 0xFF5555
+            );
+
+            screen.drawString(
+                    font,
+                    delayState,
+                    PANEL_X + 78,
+                    statusY,
+                    UiUtilsPacketManager.isDelayPacketsEnabled()
+                            ? 0xFFFF55
+                            : 0xAAAAAA
+            );
+
+            int queuedPackets =
+                    UiUtilsPacketManager.getDelayedPacketCount();
+
+            if (queuedPackets > 0) {
+                String queued =
+                        "Queued: "
+                        + queuedPackets;
+
+                screen.drawString(
+                        font,
+                        queued,
+                        PANEL_X + 4,
+                        statusY + 10,
+                        0xFFFFFF
+                );
+            }
+        }
+
+        /*
+         * Chat label.
          */
         if (chatInput != null) {
             screen.drawString(
