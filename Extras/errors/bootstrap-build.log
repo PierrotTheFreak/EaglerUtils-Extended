@@ -1,0 +1,23 @@
+========================================
+WASM GC Bootstrap Build
+========================================
+
+Repository: PierrotTheFreak/EaglerUtils-Extended
+Commit:     5409ec1130f1d274ba4fa3522f10218341b1bf4f
+Branch:     main
+Run ID:     32172060574
+Started:    2026-08-18 18:39:05 UTC
+
+Working directory:
+/home/runner/work/EaglerUtils-Extended/EaglerUtils-Extended/target_teavm_wasm_gc
+
+
+========================================
+BOOTSTRAP BUILD SUCCESSFUL
+========================================
+
+Generated bootstrap.js:
+-rw-r--r-- 1 runner runner 7.7K Aug 18 18:39 javascript_dist/bootstrap.js
+
+Bootstrap.js size:
+7830 javascript_dist/bootstrap.js
