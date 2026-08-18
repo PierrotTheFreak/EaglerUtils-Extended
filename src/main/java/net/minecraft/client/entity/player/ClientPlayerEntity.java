@@ -80,6 +80,9 @@ import net.minecraft.world.dimension.DimensionType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+// Custom imports
+import net.minecraft.client.gui.uiutils.UiUtilsPacketManager;
+
 @OnlyIn(Dist.CLIENT)
 public class ClientPlayerEntity extends AbstractClientPlayerEntity {
    public final ClientPlayNetHandler connection;
@@ -246,7 +249,6 @@ public class ClientPlayerEntity extends AbstractClientPlayerEntity {
 
    }
 
-
    public ItemEntity dropItem(boolean dropAll) {
       CPlayerDiggingPacket.Action cplayerdiggingpacket$action = dropAll ? CPlayerDiggingPacket.Action.DROP_ALL_ITEMS : CPlayerDiggingPacket.Action.DROP_ITEM;
       this.connection.sendPacket(new CPlayerDiggingPacket(cplayerdiggingpacket$action, BlockPos.ZERO, Direction.DOWN));
@@ -258,7 +260,14 @@ public class ClientPlayerEntity extends AbstractClientPlayerEntity {
       if (this.connection.getNetworkManager() instanceof SingleplayerNetworkManager && message.startsWith("/eagskull")) {
          this.mc.skullCommand.openFileChooser();
       } else {
-         this.connection.sendPacket(new CChatMessagePacket(message));
+         CChatMessagePacket packet = new CChatMessagePacket(message);
+
+         if (!UiUtilsPacketManager.handleOutgoingPacket(
+               packet,
+               this.connection.getNetworkManager()
+         )) {
+            this.connection.sendPacket(packet);
+         }
       }
    }
 
@@ -278,7 +287,17 @@ public class ClientPlayerEntity extends AbstractClientPlayerEntity {
    }
 
    public void closeScreen() {
-      this.connection.sendPacket(new CCloseWindowPacket(this.openContainer.windowId));
+      CCloseWindowPacket packet = new CCloseWindowPacket(
+            this.openContainer.windowId
+      );
+
+      if (!UiUtilsPacketManager.handleOutgoingPacket(
+            packet,
+            this.connection.getNetworkManager()
+      )) {
+         this.connection.sendPacket(packet);
+      }
+
       this.closeScreenAndDropStack();
    }
 
@@ -787,8 +806,7 @@ public class ClientPlayerEntity extends AbstractClientPlayerEntity {
       return this.rowingBoat;
    }
 
-
-   public EffectInstance removeActivePotionEffect( Effect potioneffectin) {
+   public EffectInstance removeActivePotionEffect(Effect potioneffectin) {
       if (potioneffectin == Effects.NAUSEA) {
          this.prevTimeInPortal = 0.0F;
          this.timeInPortal = 0.0F;
