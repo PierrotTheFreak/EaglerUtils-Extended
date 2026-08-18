@@ -51,6 +51,9 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+// Custom Imports
+import net.minecraft.client.gui.uiutils.UiUtilsPacketManager;
+
 @OnlyIn(Dist.CLIENT)
 public class PlayerController {
    private static final Logger field_225325_a = LogManager.getLogger();
@@ -99,22 +102,19 @@ public class PlayerController {
          BlockState blockstate = world.getBlockState(pos);
          if (!this.mc.player.getHeldItemMainhand().getItem().canPlayerBreakBlockWhileHolding(blockstate, world, pos, this.mc.player)) {
             return false;
+         } else if ((blockstate.getBlock() instanceof CommandBlockBlock || blockstate.getBlock() instanceof StructureBlock || blockstate.getBlock() instanceof JigsawBlock) && !this.mc.player.canUseCommandBlock()) {
+            return false;
+         } else if (blockstate.isAir()) {
+            return false;
          } else {
-            Block block = blockstate.getBlock();
-            if ((block instanceof CommandBlockBlock || block instanceof StructureBlock || block instanceof JigsawBlock) && !this.mc.player.canUseCommandBlock()) {
-               return false;
-            } else if (blockstate.isAir()) {
-               return false;
-            } else {
-               block.onBlockHarvested(world, pos, blockstate, this.mc.player);
-               IFluidState ifluidstate = world.getFluidState(pos);
-               boolean flag = world.setBlockState(pos, ifluidstate.getBlockState(), 11);
-               if (flag) {
-                  block.onPlayerDestroy(world, pos, blockstate);
-               }
-
-               return flag;
+            blockstate.getBlock().onBlockHarvested(world, pos, blockstate, this.mc.player);
+            IFluidState ifluidstate = world.getFluidState(pos);
+            boolean flag = world.setBlockState(pos, ifluidstate.getBlockState(), 11);
+            if (flag) {
+               blockstate.getBlock().onPlayerDestroy(world, pos, blockstate);
             }
+
+            return flag;
          }
       }
    }
@@ -340,7 +340,23 @@ public class PlayerController {
    public ItemStack windowClick(int windowId, int slotId, int mouseButton, ClickType type, PlayerEntity player) {
       short short1 = player.openContainer.getNextTransactionID(player.inventory);
       ItemStack itemstack = player.openContainer.slotClick(slotId, mouseButton, type, player);
-      this.connection.sendPacket(new CClickWindowPacket(windowId, slotId, mouseButton, type, itemstack, short1));
+
+      CClickWindowPacket packet = new CClickWindowPacket(
+            windowId,
+            slotId,
+            mouseButton,
+            type,
+            itemstack,
+            short1
+      );
+
+      if (!UiUtilsPacketManager.handleOutgoingPacket(
+            packet,
+            this.connection.getNetworkManager()
+      )) {
+         this.connection.sendPacket(packet);
+      }
+
       return itemstack;
    }
 
@@ -349,7 +365,17 @@ public class PlayerController {
    }
 
    public void sendEnchantPacket(int windowID, int button) {
-      this.connection.sendPacket(new CEnchantItemPacket(windowID, button));
+      CEnchantItemPacket packet = new CEnchantItemPacket(
+            windowID,
+            button
+      );
+
+      if (!UiUtilsPacketManager.handleOutgoingPacket(
+            packet,
+            this.connection.getNetworkManager()
+      )) {
+         this.connection.sendPacket(packet);
+      }
    }
 
    public void sendSlotPacket(ItemStack itemStackIn, int slotId) {
