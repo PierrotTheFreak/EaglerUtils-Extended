@@ -360,8 +360,18 @@ public class PlayerController {
       }
    }
 
-   public ClientPlayerEntity createPlayer(ClientWorld p_199681_1_, StatisticsManager p_199681_2_, ClientRecipeBook p_199681_3_) {
-      return new ClientPlayerEntity(this.mc, this.connection, p_199681_2_, p_199681_3_);
+   public ClientPlayerEntity createPlayer(
+         ClientWorld p_199681_1_,
+         StatisticsManager p_199681_2_,
+         ClientRecipeBook p_199681_3_
+   ) {
+      return new ClientPlayerEntity(
+            this.mc,
+            p_199681_1_,
+            this.connection,
+            p_199681_2_,
+            p_199681_3_
+      );
    }
 
    public void attackEntity(PlayerEntity playerIn, Entity targetEntity) {
