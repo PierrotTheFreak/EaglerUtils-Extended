@@ -3,105 +3,80 @@ package net.minecraft.client.gui.uiutils;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.NetworkManager;
+import net.minecraft.network.play.client.CChatMessagePacket;
 import net.minecraft.network.play.client.CClickWindowPacket;
+import net.minecraft.network.play.client.CCloseWindowPacket;
 import net.minecraft.network.play.client.CEnchantItemPacket;
-import net.minecraft.util.text.StringTextComponent;
 
 import java.util.LinkedList;
 import java.util.Queue;
 
 /**
- * Handles the packet controls used by UI Utils.
+ * Central packet manager for UI Utils.
  *
- * The 1.14 workspace sends inventory slot clicks as CClickWindowPacket
- * and server-side container button clicks as CEnchantItemPacket.
+ * Managed packet categories currently include:
  *
- * Send Packets:
- *   Controls whether those packets are allowed to leave the client.
+ * - Container click packets
+ * - Container button packets
+ * - Chat / command packets
+ * - Container close packets
  *
- * Delay Packets:
- *   Stores those packets in a queue instead of sending them immediately.
- *
- * When Delay Packets is switched off, the queued packets should be
- * flushed through flush().
+ * Container opening packets are routed through this manager at their
+ * actual call sites so normal block-use packets are not accidentally
+ * delayed.
  */
 public class UiUtilsPacketManager {
 
     private static boolean sendPackets = true;
     private static boolean delayPackets = false;
 
-    private static final Queue<IPacket<?>> delayedPackets = new LinkedList<>();
+    private static final Queue<IPacket<?>> delayedPackets =
+            new LinkedList<>();
 
     private UiUtilsPacketManager() {
     }
 
-    /**
-     * Returns whether UI Utils is currently allowing GUI packets to be sent.
-     */
     public static boolean isSendPacketsEnabled() {
         return sendPackets;
     }
 
-    /**
-     * Returns whether GUI packets are currently being delayed.
-     */
     public static boolean isDelayPacketsEnabled() {
         return delayPackets;
     }
 
-    /**
-     * Returns the number of packets currently waiting in the queue.
-     */
     public static int getDelayedPacketCount() {
         return delayedPackets.size();
     }
 
-    /**
-     * Toggles Send Packets.
-     *
-     * When disabled, intercepted GUI packets are discarded.
-     */
     public static void setSendPackets(boolean enabled) {
         sendPackets = enabled;
-
-        /*
-         * Turning packet sending back on does not automatically flush
-         * delayed packets. Delay Packets controls that behavior.
-         */
     }
 
-    /**
-     * Toggles Delay Packets.
-     *
-     * Turning Delay Packets off immediately sends all queued packets,
-     * matching UI Utils behavior.
-     */
     public static void setDelayPackets(
             boolean enabled,
             NetworkManager networkManager
     ) {
         boolean wasEnabled = delayPackets;
+
         delayPackets = enabled;
 
+        /*
+         * Turning Delay Packets off releases everything that was
+         * waiting in the queue.
+         */
         if (wasEnabled && !enabled) {
             flush(networkManager);
         }
     }
 
-    /**
-     * Toggles Send Packets and returns the new state.
-     */
     public static boolean toggleSendPackets() {
         sendPackets = !sendPackets;
         return sendPackets;
     }
 
-    /**
-     * Toggles Delay Packets.
-     *
-     * If this turns the setting off, the queued packets are flushed.
-     */
-    public static boolean toggleDelayPackets(NetworkManager networkManager) {
+    public static boolean toggleDelayPackets(
+            NetworkManager networkManager
+    ) {
         delayPackets = !delayPackets;
 
         if (!delayPackets) {
@@ -112,22 +87,21 @@ public class UiUtilsPacketManager {
     }
 
     /**
-     * Determines whether a packet is one of the GUI packets controlled
-     * by UI Utils.
+     * Returns true for packet classes that UI Utils can directly
+     * manage.
      */
     public static boolean isManagedPacket(IPacket<?> packet) {
         return packet instanceof CClickWindowPacket
-                || packet instanceof CEnchantItemPacket;
+                || packet instanceof CEnchantItemPacket
+                || packet instanceof CChatMessagePacket
+                || packet instanceof CCloseWindowPacket;
     }
 
     /**
-     * Handles an outgoing GUI packet.
+     * Handles a managed outgoing packet.
      *
-     * Returns true when UI Utils consumed the packet and the caller
-     * should NOT send it normally.
-     *
-     * Returns false when the caller should continue with its normal
-     * networkManager.sendPacket(...) call.
+     * @return true if UI Utils consumed the packet and the caller
+     *         must NOT send it normally.
      */
     public static boolean handleOutgoingPacket(
             IPacket<?> packet,
@@ -138,19 +112,18 @@ public class UiUtilsPacketManager {
         }
 
         /*
-         * Send Packets = false:
+         * Send Packets disabled:
          *
-         * Consume the packet and do not send it.
+         * Drop the packet completely.
          */
         if (!sendPackets) {
             return true;
         }
 
         /*
-         * Delay Packets = true:
+         * Delay Packets enabled:
          *
-         * Store it until Delay Packets is disabled or another action
-         * explicitly flushes the queue.
+         * Store the packet instead of sending it.
          */
         if (delayPackets) {
             delayedPackets.add(packet);
@@ -158,16 +131,43 @@ public class UiUtilsPacketManager {
         }
 
         /*
-         * Neither control is active, so let the caller send the packet
-         * normally.
+         * Neither feature is active.
+         *
+         * Let the original caller send normally.
          */
         return false;
     }
 
     /**
-     * Sends every delayed packet in FIFO order.
+     * Same handling method used by packet types that are only
+     * managed in a specific call site, such as container-opening
+     * interaction packets.
+     *
+     * This intentionally does not require the packet itself to be
+     * one of the normal managed classes.
      */
-    public static void flush(NetworkManager networkManager) {
+    public static boolean handleSpecialOutgoingPacket(
+            IPacket<?> packet,
+            NetworkManager networkManager
+    ) {
+        if (!sendPackets) {
+            return true;
+        }
+
+        if (delayPackets) {
+            delayedPackets.add(packet);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Sends all delayed packets in FIFO order.
+     */
+    public static void flush(
+            NetworkManager networkManager
+    ) {
         if (networkManager == null) {
             delayedPackets.clear();
             return;
@@ -176,34 +176,30 @@ public class UiUtilsPacketManager {
         while (!delayedPackets.isEmpty()) {
             IPacket<?> packet = delayedPackets.poll();
 
-            /*
-             * Use the NetworkManager directly so the packets are sent
-             * exactly as they would have been normally.
-             */
             networkManager.sendPacket(packet);
         }
     }
 
     /**
-     * Removes every delayed packet without sending anything.
+     * Discards every queued packet without sending them.
      */
     public static void clearQueue() {
         delayedPackets.clear();
     }
 
     /**
-     * Disconnects from the current server after sending all delayed
-     * packets.
-     *
-     * The queue is flushed first, then the network connection is closed.
+     * Flushes the delayed packet queue and then closes the connection.
      */
-    public static void disconnectAndSend(ClientPlayerEntity player) {
+    public static void disconnectAndSend(
+            ClientPlayerEntity player
+    ) {
         if (player == null || player.connection == null) {
             clearQueue();
             return;
         }
 
-        NetworkManager networkManager = player.connection.getNetworkManager();
+        NetworkManager networkManager =
+                player.connection.getNetworkManager();
 
         if (networkManager == null) {
             clearQueue();
@@ -211,22 +207,19 @@ public class UiUtilsPacketManager {
         }
 
         /*
-         * Send any packets waiting in Delay Packets first.
+         * Release anything waiting first.
          */
         flush(networkManager);
 
-        /*
-         * Clear the queue so there are no stale packets if something
-         * keeps the client alive after the disconnect.
-         */
         clearQueue();
 
         /*
-         * Disconnect immediately after the queued packets have been
-         * handed to the network manager.
+         * The network manager will handle the actual disconnect.
          */
         networkManager.closeChannel(
-                new StringTextComponent("UI Utils: Disconnect and Send")
+                new net.minecraft.util.text.StringTextComponent(
+                        "UI Utils: Disconnect and Send"
+                )
         );
     }
 }
