@@ -104,6 +104,10 @@ public class UiUtilsPacketSettingsScreen extends Screen {
                 this.searchField
         );
 
+this.searchField.setFocused(true);
+
+this.scrollOffset = 0;
+
         /*
          * Start at the top whenever the settings screen is opened.
          */
