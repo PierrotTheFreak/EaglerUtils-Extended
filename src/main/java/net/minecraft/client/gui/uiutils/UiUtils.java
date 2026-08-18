@@ -13,31 +13,38 @@ import net.minecraft.util.text.ITextComponent;
 
 public class UiUtils {
 
+    private static final int PANEL_X = 6;
+    private static final int PANEL_Y = 6;
+
     /*
-     * Main panel layout.
-     *
-     * The old 150px width was too cramped for several of the button
-     * labels. Give the controls some room to breathe.
+     * Keep the whole overlay on a single fixed inner grid.
      */
-    private static final int PANEL_X = 4;
-    private static final int PANEL_Y = 4;
-    private static final int PANEL_WIDTH = 190;
+    private static final int PANEL_WIDTH = 210;
+    private static final int PANEL_PADDING = 6;
 
-    private static final int PANEL_PADDING = 4;
+    private static final int CONTROL_X = PANEL_X + PANEL_PADDING;
+    private static final int CONTROL_WIDTH =
+            PANEL_WIDTH - (PANEL_PADDING * 2);
 
-    private static final int BUTTON_WIDTH = PANEL_WIDTH - (PANEL_PADDING * 2);
+    private static final int TITLE_HEIGHT = 18;
+
     private static final int BUTTON_HEIGHT = 20;
-    private static final int BUTTON_SPACING = 22;
+    private static final int BUTTON_GAP = 3;
+    private static final int BUTTON_STEP =
+            BUTTON_HEIGHT + BUTTON_GAP;
 
+    private static final int CHAT_LABEL_HEIGHT = 12;
+    private static final int CHAT_GAP = 4;
     private static final int CHAT_INPUT_HEIGHT = 20;
-    private static final int CHAT_INPUT_SPACING = 6;
 
-    private static final int STATUS_HEIGHT = 24;
+    private static final int STATUS_GAP = 5;
+    private static final int STATUS_HEIGHT = 22;
 
     private static TextFieldWidget chatInput;
 
     public static boolean shouldShow(Screen screen) {
-        return screen instanceof ContainerScreen || screen instanceof ChatScreen;
+        return screen instanceof ContainerScreen
+                || screen instanceof ChatScreen;
     }
 
     public static void init(Screen screen) {
@@ -47,111 +54,133 @@ public class UiUtils {
             return;
         }
 
+        /*
+         * The overlay controls are currently intended for container GUIs.
+         */
         if (screen instanceof ContainerScreen) {
-            int y = PANEL_Y + 18;
+            int y = PANEL_Y + TITLE_HEIGHT + 2;
+
+            addButton(
+                    screen,
+                    "Close Without Packet",
+                    y,
+                    new Button.IPressable() {
+                        @Override
+                        public void onPress(Button button) {
+                            closeWithoutPacket(screen);
+                        }
+                    }
+            );
+            y += BUTTON_STEP;
+
+            addButton(
+                    screen,
+                    "De-sync",
+                    y,
+                    new Button.IPressable() {
+                        @Override
+                        public void onPress(Button button) {
+                            desync(screen);
+                        }
+                    }
+            );
+            y += BUTTON_STEP;
+
+            addButton(
+                    screen,
+                    getSendPacketsText(),
+                    y,
+                    new Button.IPressable() {
+                        @Override
+                        public void onPress(Button button) {
+                            UiUtilsPacketManager.toggleSendPackets();
+                            button.setMessage(getSendPacketsText());
+                        }
+                    }
+            );
+            y += BUTTON_STEP;
+
+            addButton(
+                    screen,
+                    getDelayPacketsText(),
+                    y,
+                    new Button.IPressable() {
+                        @Override
+                        public void onPress(Button button) {
+                            toggleDelayPackets(screen);
+                            button.setMessage(getDelayPacketsText());
+                        }
+                    }
+            );
+            y += BUTTON_STEP;
+
+            addButton(
+                    screen,
+                    "Save GUI",
+                    y,
+                    new Button.IPressable() {
+                        @Override
+                        public void onPress(Button button) {
+                            UiUtilsSavedGui.save(screen);
+                        }
+                    }
+            );
+            y += BUTTON_STEP;
+
+            addButton(
+                    screen,
+                    "Disconnect + Send",
+                    y,
+                    new Button.IPressable() {
+                        @Override
+                        public void onPress(Button button) {
+                            disconnectAndSend(screen);
+                        }
+                    }
+            );
+            y += BUTTON_STEP;
+
+            addButton(
+                    screen,
+                    "Fabricate Packet",
+                    y,
+                    new Button.IPressable() {
+                        @Override
+                        public void onPress(Button button) {
+                            screen.mc.displayGuiScreen(
+                                    new UiUtilsFabricatePacketScreen(screen)
+                            );
+                        }
+                    }
+            );
+            y += BUTTON_STEP;
+
+            addButton(
+                    screen,
+                    "Copy GUI Title JSON",
+                    y,
+                    new Button.IPressable() {
+                        @Override
+                        public void onPress(Button button) {
+                            copyGuiTitleJson(screen);
+                        }
+                    }
+            );
+            y += BUTTON_STEP;
 
             /*
-             * Close Without Packet
+             * Chat label.
              */
-            addButton(screen, "Close Without Packet", y, new Button.IPressable() {
-                @Override
-                public void onPress(Button button) {
-                    closeWithoutPacket(screen);
-                }
-            });
-            y += BUTTON_SPACING;
+            y += CHAT_GAP;
 
             /*
-             * De-sync
+             * Chat input.
              */
-            addButton(screen, "De-sync", y, new Button.IPressable() {
-                @Override
-                public void onPress(Button button) {
-                    desync(screen);
-                }
-            });
-            y += BUTTON_SPACING;
-
-            /*
-             * Send Packets
-             */
-            addButton(screen, getSendPacketsText(), y, new Button.IPressable() {
-                @Override
-                public void onPress(Button button) {
-                    UiUtilsPacketManager.toggleSendPackets();
-                    button.setMessage(getSendPacketsText());
-                }
-            });
-            y += BUTTON_SPACING;
-
-            /*
-             * Delay Packets
-             */
-            addButton(screen, getDelayPacketsText(), y, new Button.IPressable() {
-                @Override
-                public void onPress(Button button) {
-                    toggleDelayPackets(screen);
-                    button.setMessage(getDelayPacketsText());
-                }
-            });
-            y += BUTTON_SPACING;
-
-            /*
-             * Save GUI
-             */
-            addButton(screen, "Save GUI", y, new Button.IPressable() {
-                @Override
-                public void onPress(Button button) {
-                    UiUtilsSavedGui.save(screen);
-                }
-            });
-            y += BUTTON_SPACING;
-
-            /*
-             * Disconnect + Send
-             */
-            addButton(screen, "Disconnect + Send", y, new Button.IPressable() {
-                @Override
-                public void onPress(Button button) {
-                    disconnectAndSend(screen);
-                }
-            });
-            y += BUTTON_SPACING;
-
-            /*
-             * Fabricate Packet
-             */
-            addButton(screen, "Fabricate Packet", y, new Button.IPressable() {
-                @Override
-                public void onPress(Button button) {
-                    screen.mc.displayGuiScreen(
-                            new UiUtilsFabricatePacketScreen(screen)
-                    );
-                }
-            });
-            y += BUTTON_SPACING;
-
-            /*
-             * Copy GUI Title JSON
-             */
-            addButton(screen, "Copy GUI Title JSON", y, new Button.IPressable() {
-                @Override
-                public void onPress(Button button) {
-                    copyGuiTitleJson(screen);
-                }
-            });
-            y += BUTTON_SPACING;
-
-            /*
-             * Chat input
-             */
-            y += CHAT_INPUT_SPACING;
-
             chatInput = new TextFieldWidget(
                     screen.mc.fontRenderer,
-                    PANEL_X + PANEL_PADDING,
-                    y,
-                    BUTTON_WIDTH,
+                    CONTROL_X,
+                    y + CHAT_LABEL_HEIGHT,
+                    CONTROL_WIDTH,
                     CHAT_INPUT_HEIGHT,
                     "Chat"
             );
@@ -171,9 +200,9 @@ public class UiUtils {
     ) {
         screen.addUiUtilsButton(
                 new Button(
-                        BUTTON_WIDTH,
+                        CONTROL_WIDTH,
                         BUTTON_HEIGHT,
-                        PANEL_X + PANEL_PADDING,
+                        CONTROL_X,
                         y,
                         text,
                         action
@@ -195,10 +224,6 @@ public class UiUtils {
                 : "OFF");
     }
 
-    /**
-     * Closes the current container locally without sending
-     * CCloseWindowPacket.
-     */
     private static void closeWithoutPacket(Screen screen) {
         if (!(screen instanceof ContainerScreen)) {
             return;
@@ -209,14 +234,11 @@ public class UiUtils {
         }
 
         if (screen.mc.player instanceof ClientPlayerEntity) {
-            ((ClientPlayerEntity) screen.mc.player).closeScreenAndDropStack();
+            ((ClientPlayerEntity) screen.mc.player)
+                    .closeScreenAndDropStack();
         }
     }
 
-    /**
-     * Sends CCloseWindowPacket to the server while deliberately
-     * keeping the current GUI open on the client.
-     */
     private static void desync(Screen screen) {
         if (!(screen instanceof ContainerScreen)) {
             return;
@@ -235,9 +257,6 @@ public class UiUtils {
         );
     }
 
-    /**
-     * Toggles packet delaying.
-     */
     private static void toggleDelayPackets(Screen screen) {
         if (screen.mc == null || screen.mc.player == null) {
             return;
@@ -248,9 +267,6 @@ public class UiUtils {
         );
     }
 
-    /**
-     * Sends queued packets and disconnects.
-     */
     private static void disconnectAndSend(Screen screen) {
         if (screen.mc == null || screen.mc.player == null) {
             return;
@@ -261,9 +277,6 @@ public class UiUtils {
         );
     }
 
-    /**
-     * Copies the current container title to the clipboard as JSON.
-     */
     private static void copyGuiTitleJson(Screen screen) {
         if (!(screen instanceof ContainerScreen)) {
             return;
@@ -306,7 +319,7 @@ public class UiUtils {
         }
 
         /*
-         * Enter / Numpad Enter.
+         * Enter / numpad Enter sends the current message.
          */
         if (keyCode == 257 || keyCode == 335) {
             String message = chatInput.getText().trim();
@@ -320,8 +333,9 @@ public class UiUtils {
         }
 
         /*
-         * Let the text field handle arrows, backspace, home/end,
-         * Ctrl+A/C/V/X, etc.
+         * While the chat field owns focus, do not allow keys to fall
+         * through into Screen.keyPressed(). This prevents keys such
+         * as E from triggering Minecraft's close-screen behavior.
          */
         chatInput.keyPressed(
                 keyCode,
@@ -329,16 +343,6 @@ public class UiUtils {
                 modifiers
         );
 
-        /*
-         * IMPORTANT:
-         *
-         * TextFieldWidget.keyPressed() returns false for ordinary
-         * letters such as E. We still need to consume the key while
-         * the input is focused so Screen.keyPressed() does not treat
-         * E as the Minecraft close-screen key.
-         *
-         * The actual character is handled by charTyped().
-         */
         return true;
     }
 
@@ -368,7 +372,7 @@ public class UiUtils {
         }
 
         /*
-         * First allow the text field to handle clicks inside itself.
+         * If the click is inside the chat field, let it focus itself.
          */
         if (chatInput.mouseClicked(
                 mouseX,
@@ -379,13 +383,10 @@ public class UiUtils {
         }
 
         /*
-         * We clicked somewhere else.
-         *
-         * Remove focus from the input so keyboard keys once again
-         * belong to the normal screen.
+         * Clicking elsewhere removes focus from the chat field.
          */
         if (chatInput.isFocused()) {
-            chatInput.setFocused2(false);
+            chatInput.setFocused(false);
 
             if (screen.getFocused() == chatInput) {
                 screen.setFocused(null);
@@ -409,48 +410,92 @@ public class UiUtils {
         if (screen instanceof ContainerScreen) {
             int buttonCount = 8;
 
-            int panelHeight =
-                    22
-                    + (buttonCount * BUTTON_SPACING);
+            int buttonsHeight =
+                    buttonCount * BUTTON_STEP
+                    - BUTTON_GAP;
+
+            int chatHeight = 0;
 
             if (chatInput != null) {
-                panelHeight +=
-                        CHAT_INPUT_SPACING
+                chatHeight =
+                        CHAT_GAP
+                        + CHAT_LABEL_HEIGHT
                         + CHAT_INPUT_HEIGHT;
             }
 
-            panelHeight += STATUS_HEIGHT;
+            int panelHeight =
+                    PANEL_Y
+                    + TITLE_HEIGHT
+                    + 2
+                    + buttonsHeight
+                    + chatHeight
+                    + STATUS_GAP
+                    + STATUS_HEIGHT;
 
             /*
-             * Panel background.
+             * Main panel.
              */
             screen.fill(
-                    PANEL_X - 2,
-                    PANEL_Y - 2,
-                    PANEL_X + PANEL_WIDTH + 2,
-                    PANEL_Y + panelHeight,
+                    PANEL_X,
+                    PANEL_Y,
+                    PANEL_X + PANEL_WIDTH,
+                    panelHeight,
                     0xCC111111
             );
 
             /*
-             * Title.
+             * Title centered over the controls.
              */
+            String title = "UI Utils";
+            int titleWidth = font.getStringWidth(title);
+
             screen.drawString(
                     font,
-                    "UI Utils",
-                    PANEL_X + PANEL_PADDING,
-                    PANEL_Y + 6,
+                    title,
+                    PANEL_X + (PANEL_WIDTH - titleWidth) / 2,
+                    PANEL_Y + 5,
                     0xFFFFFF
             );
 
             /*
-             * Packet status.
+             * Separator below the title.
+             */
+            screen.fill(
+                    CONTROL_X,
+                    PANEL_Y + TITLE_HEIGHT,
+                    CONTROL_X + CONTROL_WIDTH,
+                    PANEL_Y + TITLE_HEIGHT + 1,
+                    0xFF444444
+            );
+
+            /*
+             * Chat label.
+             */
+            if (chatInput != null) {
+                screen.drawString(
+                        font,
+                        "Chat",
+                        CONTROL_X,
+                        chatInput.y - CHAT_LABEL_HEIGHT,
+                        0xAAAAAA
+                );
+            }
+
+            /*
+             * Status area.
              */
             int statusY =
-                    PANEL_Y
-                    + panelHeight
+                    panelHeight
                     - STATUS_HEIGHT
-                    + 2;
+                    + 4;
+
+            screen.fill(
+                    CONTROL_X,
+                    statusY - 3,
+                    CONTROL_X + CONTROL_WIDTH,
+                    statusY - 2,
+                    0xFF444444
+            );
 
             String sendState =
                     "Send: "
@@ -467,7 +512,7 @@ public class UiUtils {
             screen.drawString(
                     font,
                     sendState,
-                    PANEL_X + PANEL_PADDING,
+                    CONTROL_X,
                     statusY,
                     UiUtilsPacketManager.isSendPacketsEnabled()
                             ? 0x55FF55
@@ -477,7 +522,7 @@ public class UiUtils {
             screen.drawString(
                     font,
                     delayState,
-                    PANEL_X + 90,
+                    CONTROL_X + 82,
                     statusY,
                     UiUtilsPacketManager.isDelayPacketsEnabled()
                             ? 0xFFFF55
@@ -491,7 +536,7 @@ public class UiUtils {
                 screen.drawString(
                         font,
                         "Queued: " + queuedPackets,
-                        PANEL_X + PANEL_PADDING,
+                        CONTROL_X,
                         statusY + 10,
                         0xFFFFFF
                 );
@@ -499,35 +544,25 @@ public class UiUtils {
         }
 
         /*
-         * Chat screen still gets the UI Utils title/panel.
+         * Chat screen gets a small standalone UI Utils header.
          */
         else if (screen instanceof ChatScreen) {
             screen.fill(
-                    PANEL_X - 2,
-                    PANEL_Y - 2,
-                    PANEL_X + PANEL_WIDTH + 2,
+                    PANEL_X,
+                    PANEL_Y,
+                    PANEL_X + PANEL_WIDTH,
                     PANEL_Y + 26,
                     0xCC111111
             );
 
-            screen.drawString(
-                    font,
-                    "UI Utils",
-                    PANEL_X + PANEL_PADDING,
-                    PANEL_Y + 6,
-                    0xFFFFFF
-            );
-        }
+            String title = "UI Utils";
+            int titleWidth = font.getStringWidth(title);
 
-        /*
-         * Chat label for the container overlay.
-         */
-        if (chatInput != null) {
             screen.drawString(
                     font,
-                    "Chat:",
-                    PANEL_X + PANEL_PADDING,
-                    chatInput.y - 12,
+                    title,
+                    PANEL_X + (PANEL_WIDTH - titleWidth) / 2,
+                    PANEL_Y + 7,
                     0xFFFFFF
             );
         }
