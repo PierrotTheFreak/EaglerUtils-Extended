@@ -19,6 +19,7 @@ import java.util.Set;
 public final class UiUtilsPacketManager {
     private static boolean sendPackets=true;
     private static boolean delayPackets;
+    private static boolean flushingPackets;
     private static final Queue<IPacket<?>> delayedPackets=new LinkedList<>();
     private static final Queue<Runnable> delayedIncomingTasks=new LinkedList<>();
     private static final Set<Class<?>> serverboundSelection=new LinkedHashSet<>();
@@ -64,6 +65,7 @@ public final class UiUtilsPacketManager {
         if(packet instanceof CChatMessagePacket && handleLocalCommand(((CChatMessagePacket)packet).getMessage(),networkManager)) return true;
         if(packet==null||isKeepAlivePacket(packet.getClass()))return false;
         UiUtilsPacketInspector.record(packet,PacketDirection.SERVERBOUND);UiUtilsPacketReplay.record(packet,PacketDirection.SERVERBOUND);
+        if(flushingPackets)return false;
         if(!sendPackets&&shouldDelayPacket(packet))return true;
         if(delayPackets&&shouldDelayPacket(packet)){delayedPackets.add(packet);return true;}
         return false;
@@ -93,7 +95,7 @@ public final class UiUtilsPacketManager {
     private static void notifyCommand(String message){Minecraft mc=Minecraft.getInstance();if(mc.ingameGUI!=null&&mc.ingameGUI.getChatGUI()!=null)mc.ingameGUI.getChatGUI().printChatMessage(new StringTextComponent("[UiUtils] "+message));}
     public static boolean handleSpecialOutgoingPacket(IPacket<?> packet,NetworkManager networkManager){return handleOutgoingPacket(packet,networkManager);}
     public static void tick(NetworkManager networkManager){UiUtilsMacroManager.tick();}
-    public static void flush(NetworkManager networkManager){if(networkManager==null){delayedPackets.clear();return;}while(!delayedPackets.isEmpty())networkManager.sendPacket(delayedPackets.poll());}
+    public static void flush(NetworkManager networkManager){if(networkManager==null){delayedPackets.clear();return;}flushingPackets=true;try{while(!delayedPackets.isEmpty()){IPacket<?> packet=delayedPackets.poll();if(packet!=null)networkManager.sendPacket(packet);}}finally{flushingPackets=false;}}
     public static void flushIncomingPackets(){while(!delayedIncomingTasks.isEmpty()){Runnable task=delayedIncomingTasks.poll();if(task!=null)task.run();}}
     public static void clearQueue(){delayedPackets.clear();delayedIncomingTasks.clear();}
     public static void disconnectAndSend(ClientPlayerEntity player){if(player==null||player.connection==null){clearQueue();return;}NetworkManager nm=player.connection.getNetworkManager();if(nm==null){clearQueue();return;}flush(nm);flushIncomingPackets();clearQueue();nm.closeChannel(new StringTextComponent("UI Utils: Disconnect and Send"));}
