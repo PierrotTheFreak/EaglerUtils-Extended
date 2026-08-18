@@ -3,18 +3,18 @@ Repository Build Output
 ========================================
 
 Repository: PierrotTheFreak/EaglerUtils-Extended
-Commit:     b77f3e9f68da15cd94468b1a3c33377b558765d0
+Commit:     0f9b4b1e53281918b1886b7a14b8377598472766
 Branch:     main
-Run ID:     32195468941
+Run ID:     32197092493
 Runner OS:  Linux
-Finished:   2026-08-18 23:07:59 UTC
+Finished:   2026-08-18 23:31:36 UTC
 
 ========================================
 WASM ARTIFACTS
 ========================================
 
-Extras/artifacts/Eaglercraft_1.14.4_WASM-GC_Offline_Download.html (35270784 bytes)
-Extras/artifacts/assets.epw (26443023 bytes)
+Extras/artifacts/Eaglercraft_1.14.4_WASM-GC_Offline_Download.html (35271196 bytes)
+Extras/artifacts/assets.epw (26443331 bytes)
 Extras/artifacts/bootstrap.js (7830 bytes)
 Extras/artifacts/favicon.png (1258 bytes)
 
@@ -23,6 +23,6 @@ ERROR / REPORT FILES
 ========================================
 
 Extras/errors/bootstrap-build.log (651 bytes)
-Extras/errors/build.log (18995 bytes)
-Extras/errors/report.txt (5421 bytes)
+Extras/errors/build.log (18997 bytes)
+Extras/errors/report.txt (5412 bytes)
 Extras/errors/repository-build-info.txt (721 bytes)

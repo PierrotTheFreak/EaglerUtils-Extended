@@ -3,12 +3,12 @@ Eaglercraft WASM Build Report
 ========================================
 
 Repository: PierrotTheFreak/EaglerUtils-Extended
-Commit:     b77f3e9f68da15cd94468b1a3c33377b558765d0
+Commit:     0f9b4b1e53281918b1886b7a14b8377598472766
 Branch:     main
-Run ID:     32195468941
+Run ID:     32197092493
 Runner OS:  Linux
-Runner:     GitHub Actions 1000008738
-Started:    2026-08-18 23:05:08 UTC
+Runner:     GitHub Actions 1000008739
+Started:    2026-08-18 23:27:50 UTC
 
 Build task:
   ./gradlew makeMainWasmClientBundle
@@ -60,19 +60,19 @@ OS:            Linux 6.17.0-1022-azure amd64
 
 
 Disk space:
-Filesystem       Size  Used Avail Use% Mounted on
-/dev/root        145G   60G   85G  42% /
-tmpfs            7.9G     0  7.9G   0% /dev/shm
-tmpfs            3.2G 1008K  3.2G   1% /run
-tmpfs            5.0M     0  5.0M   0% /run/lock
-efivarfs         128M   32K  128M   1% /sys/firmware/efi/efivars
-/dev/nvme0n1p16  881M   64M  756M   8% /boot
-/dev/nvme0n1p15  105M  6.2M   99M   6% /boot/efi
-tmpfs            1.6G   12K  1.6G   1% /run/user/1001
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/root       145G   60G   85G  42% /
+tmpfs           7.9G     0  7.9G   0% /dev/shm
+tmpfs           3.2G 1008K  3.2G   1% /run
+tmpfs           5.0M     0  5.0M   0% /run/lock
+efivarfs        128M   32K  128M   1% /sys/firmware/efi/efivars
+/dev/sda16      881M   64M  756M   8% /boot
+/dev/sda15      105M  6.2M   99M   6% /boot/efi
+tmpfs           1.6G   12K  1.6G   1% /run/user/1001
 
 Memory:
                total        used        free      shared  buff/cache   available
-Mem:            15Gi       1.3Gi        10Gi        47Mi       4.7Gi        14Gi
+Mem:            15Gi       1.4Gi        10Gi        48Mi       4.4Gi        14Gi
 Swap:          3.0Gi          0B       3.0Gi
 
 Working directory:
@@ -90,8 +90,8 @@ SUCCESS
 ========================================
 GENERATED ARTIFACTS
 ========================================
-target_teavm_wasm_gc/javascript_dist/Eaglercraft_1.14.4_WASM-GC_Offline_Download.html (35270784 bytes)
-target_teavm_wasm_gc/javascript_dist/assets.epw (26443023 bytes)
+target_teavm_wasm_gc/javascript_dist/Eaglercraft_1.14.4_WASM-GC_Offline_Download.html (35271196 bytes)
+target_teavm_wasm_gc/javascript_dist/assets.epw (26443331 bytes)
 target_teavm_wasm_gc/javascript_dist/bootstrap.js (7830 bytes)
 target_teavm_wasm_gc/javascript_dist/favicon.png (1258 bytes)
 
@@ -102,13 +102,13 @@ IMPORTANT FILE CHECKS
 ========================================
 
 bootstrap.js:
--rw-r--r-- 1 runner runner 7.7K Aug 18 23:05 target_teavm_wasm_gc/javascript_dist/bootstrap.js
+-rw-r--r-- 1 runner runner 7.7K Aug 18 23:27 target_teavm_wasm_gc/javascript_dist/bootstrap.js
 
 assets.epw:
--rw-r--r-- 1 runner runner 26M Aug 18 23:07 target_teavm_wasm_gc/javascript_dist/assets.epw
+-rw-r--r-- 1 runner runner 26M Aug 18 23:31 target_teavm_wasm_gc/javascript_dist/assets.epw
 
 favicon.png:
--rw-r--r-- 1 runner runner 1.3K Aug 18 23:07 target_teavm_wasm_gc/javascript_dist/favicon.png
+-rw-r--r-- 1 runner runner 1.3K Aug 18 23:31 target_teavm_wasm_gc/javascript_dist/favicon.png
 
 ========================================
 PROJECT DIAGNOSTICS
@@ -158,4 +158,4 @@ Git status:
 ========================================
 BUILD COMPLETED
 ========================================
-Finished: 2026-08-18 23:07:59 UTC
+Finished: 2026-08-18 23:31:36 UTC
