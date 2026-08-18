@@ -266,7 +266,7 @@ public abstract class Screen extends FocusableGui implements IRenderable {
      * Gives UiUtils access to the screen's FontRenderer without exposing
      * the protected field directly.
      */
-    public FontRenderer getFontRenderer() {
+    public FontRenderer getUiUtilsFontRenderer() {
         return this.font;
     }
 
@@ -722,10 +722,10 @@ public abstract class Screen extends FocusableGui implements IRenderable {
                 GlStateManager.enableTexture();
 
                 GlStateManager.blendFuncSeparate(
-                        GlStateManager.SourceFactor.SRC_ALPHA,
-                        GlStateManager.SourceFactor.ONE_MINUS_SRC_ALPHA,
-                        GlStateManager.SourceFactor.ONE,
-                        GlStateManager.SourceFactor.ZERO
+                  GlStateManager.SourceFactor.SRC_ALPHA,
+                  GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                  GlStateManager.SourceFactor.ONE,
+                  GlStateManager.DestFactor.ZERO
                 );
 
                 Tessellator tessellator = Tessellator.getInstance();
