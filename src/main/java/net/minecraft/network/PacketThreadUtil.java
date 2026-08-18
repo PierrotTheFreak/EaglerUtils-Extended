@@ -5,27 +5,34 @@ import net.minecraft.world.server.ServerWorld;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/** Common packet-thread gate with UI Utils server-packet delay support. */
 public class PacketThreadUtil {
-   private static final Logger field_225384_a = LogManager.getLogger();
+    private static final Logger field_225384_a = LogManager.getLogger();
 
-   public static <T extends INetHandler> void checkThreadAndEnqueue(IPacket<T> packetIn, T processor, ServerWorld worldIn) throws ThreadQuickExitException {
-      checkThreadAndEnqueue(packetIn, processor, worldIn.getServer());
-   }
+    public static <T extends INetHandler> void checkThreadAndEnqueue(
+            IPacket<T> packetIn, T processor, ServerWorld worldIn
+    ) throws ThreadQuickExitException {
+        checkThreadAndEnqueue(packetIn, processor, worldIn.getServer());
+    }
 
-   public static <T extends INetHandler> void checkThreadAndEnqueue(IPacket<T> packetIn, T processor, ThreadTaskExecutor<?> executor) throws ThreadQuickExitException {
-      if (net.minecraft.client.gui.uiutils.UiUtilsPacketManager.handleIncomingPacket(packetIn)) {
-         throw ThreadQuickExitException.INSTANCE;
-      }
-      if (!executor.isOnExecutionThread()) {
-         executor.execute(() -> {
-            if (processor.getNetworkManager().isChannelOpen()) {
-               packetIn.processPacket(processor);
-            } else {
-               field_225384_a.debug("Ignoring packet due to disconnection: " + packetIn);
-            }
+    public static <T extends INetHandler> void checkThreadAndEnqueue(
+            IPacket<T> packetIn, T processor, ThreadTaskExecutor<?> executor
+    ) throws ThreadQuickExitException {
+        if (net.minecraft.client.gui.uiutils.UiUtilsPacketManager.handleIncomingPacket(
+                packetIn,
+                () -> packetIn.processPacket(processor))) {
+            throw ThreadQuickExitException.INSTANCE;
+        }
 
-         });
-         throw ThreadQuickExitException.INSTANCE;
-      }
-   }
+        if (!executor.isOnExecutionThread()) {
+            executor.execute(() -> {
+                if (processor.getNetworkManager().isChannelOpen()) {
+                    packetIn.processPacket(processor);
+                } else {
+                    field_225384_a.debug("Ignoring packet due to disconnection: " + packetIn);
+                }
+            });
+            throw ThreadQuickExitException.INSTANCE;
+        }
+    }
 }
