@@ -3,28 +3,16 @@ package net.minecraft.client.gui.uiutils;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.client.CChatMessagePacket;
-import net.minecraft.network.play.client.CClickWindowPacket;
-import net.minecraft.network.play.client.CCloseWindowPacket;
-import net.minecraft.network.play.client.CEnchantItemPacket;
+import net.minecraft.network.PacketDirection;
+import net.minecraft.network.ProtocolType;
+import net.minecraft.util.text.StringTextComponent;
 
-import java.util.LinkedList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Queue;
+import java.util.LinkedList;
+import java.util.Set;
 
-/**
- * Central packet manager for UI Utils.
- *
- * Managed packet categories currently include:
- *
- * - Container click packets
- * - Container button packets
- * - Chat / command packets
- * - Container close packets
- *
- * Container opening packets are routed through this manager at their
- * actual call sites so normal block-use packets are not accidentally
- * delayed.
- */
 public class UiUtilsPacketManager {
 
     private static boolean sendPackets = true;
@@ -32,6 +20,15 @@ public class UiUtilsPacketManager {
 
     private static final Queue<IPacket<?>> delayedPackets =
             new LinkedList<>();
+
+    /*
+     * Packet classes selected for Delay Packets.
+     *
+     * Starts EMPTY.
+     */
+    private static final Set<Class<? extends IPacket<?>>>
+            delayedPacketTypes =
+            new LinkedHashSet<>();
 
     private UiUtilsPacketManager() {
     }
@@ -48,25 +45,10 @@ public class UiUtilsPacketManager {
         return delayedPackets.size();
     }
 
-    public static void setSendPackets(boolean enabled) {
-        sendPackets = enabled;
-    }
-
-    public static void setDelayPackets(
-            boolean enabled,
-            NetworkManager networkManager
+    public static void setSendPackets(
+            boolean enabled
     ) {
-        boolean wasEnabled = delayPackets;
-
-        delayPackets = enabled;
-
-        /*
-         * Turning Delay Packets off releases everything that was
-         * waiting in the queue.
-         */
-        if (wasEnabled && !enabled) {
-            flush(networkManager);
-        }
+        sendPackets = enabled;
     }
 
     public static boolean toggleSendPackets() {
@@ -74,10 +56,26 @@ public class UiUtilsPacketManager {
         return sendPackets;
     }
 
+    public static void setDelayPackets(
+            boolean enabled,
+            NetworkManager networkManager
+    ) {
+        boolean wasEnabled =
+                delayPackets;
+
+        delayPackets =
+                enabled;
+
+        if (wasEnabled && !enabled) {
+            flush(networkManager);
+        }
+    }
+
     public static boolean toggleDelayPackets(
             NetworkManager networkManager
     ) {
-        delayPackets = !delayPackets;
+        delayPackets =
+                !delayPackets;
 
         if (!delayPackets) {
             flush(networkManager);
@@ -86,140 +84,384 @@ public class UiUtilsPacketManager {
         return delayPackets;
     }
 
-    /**
-     * Returns true for packet classes that UI Utils can directly
-     * manage.
+    /*
+     * ------------------------------------------------------------
+     * Dynamic packet discovery
+     * ------------------------------------------------------------
      */
-    public static boolean isManagedPacket(IPacket<?> packet) {
-        return packet instanceof CClickWindowPacket
-                || packet instanceof CEnchantItemPacket
-                || packet instanceof CChatMessagePacket
-                || packet instanceof CCloseWindowPacket;
+
+    /**
+     * Returns every packet registered by the actual 1.14 PLAY
+     * protocol as SERVERBOUND.
+     *
+     * No hard-coded packet list.
+     */
+    public static List<Class<? extends IPacket<?>>>
+    getAllPacketClasses() {
+
+        return ProtocolType.PLAY.getPacketClasses(
+                PacketDirection.SERVERBOUND
+        );
     }
 
     /**
-     * Handles a managed outgoing packet.
+     * Returns the dynamically discovered packet names.
+     */
+    public static String[] getAllPacketTypes() {
+
+        List<Class<? extends IPacket<?>>> classes =
+                getAllPacketClasses();
+
+        String[] result =
+                new String[classes.size()];
+
+        for (int i = 0; i < classes.size(); ++i) {
+            result[i] =
+                    classes.get(i).getSimpleName();
+        }
+
+        return result;
+    }
+
+    /**
+     * Finds a registered packet class by its simple name.
+     */
+    private static Class<? extends IPacket<?>>
+    findPacketClass(
+            String packetName
+    ) {
+
+        for (
+                Class<? extends IPacket<?>> packetClass
+                        : getAllPacketClasses()
+        ) {
+
+            if (
+                    packetClass
+                            .getSimpleName()
+                            .equals(packetName)
+            ) {
+                return packetClass;
+            }
+        }
+
+        return null;
+    }
+
+    /*
+     * ------------------------------------------------------------
+     * Selection
+     * ------------------------------------------------------------
+     */
+
+    public static boolean isPacketDelayed(
+            String packetName
+    ) {
+
+        Class<? extends IPacket<?>> packetClass =
+                findPacketClass(packetName);
+
+        return packetClass != null
+                && delayedPacketTypes.contains(
+                packetClass
+        );
+    }
+
+    public static void setPacketDelayed(
+            String packetName,
+            boolean delayed
+    ) {
+
+        Class<? extends IPacket<?>> packetClass =
+                findPacketClass(packetName);
+
+        if (packetClass == null) {
+            return;
+        }
+
+        if (isKeepAlivePacket(packetClass)) {
+            delayedPacketTypes.remove(
+                    packetClass
+            );
+            return;
+        }
+
+        if (delayed) {
+            delayedPacketTypes.add(
+                    packetClass
+            );
+        } else {
+            delayedPacketTypes.remove(
+                    packetClass
+            );
+        }
+    }
+
+    public static boolean togglePacketDelayed(
+            String packetName
+    ) {
+
+        Class<? extends IPacket<?>> packetClass =
+                findPacketClass(packetName);
+
+        if (packetClass == null) {
+            return false;
+        }
+
+        if (isKeepAlivePacket(packetClass)) {
+            return false;
+        }
+
+        if (delayedPacketTypes.contains(
+                packetClass
+        )) {
+            delayedPacketTypes.remove(
+                    packetClass
+            );
+
+            return false;
+        }
+
+        delayedPacketTypes.add(
+                packetClass
+        );
+
+        return true;
+    }
+
+    /**
+     * Select every registered PLAY SERVERBOUND packet except
+     * CKeepAlivePacket.
+     */
+    public static void delayAllPackets() {
+
+        delayedPacketTypes.clear();
+
+        for (
+                Class<? extends IPacket<?>> packetClass
+                        : getAllPacketClasses()
+        ) {
+
+            if (!isKeepAlivePacket(
+                    packetClass
+            )) {
+                delayedPacketTypes.add(
+                        packetClass
+                );
+            }
+        }
+    }
+
+    /**
+     * Deselect every packet.
+     */
+    public static void clearDelayedPacketTypes() {
+        delayedPacketTypes.clear();
+    }
+
+    /*
+     * ------------------------------------------------------------
+     * Keep-alive protection
+     * ------------------------------------------------------------
+     */
+
+    public static boolean isKeepAlivePacket(
+            Class<? extends IPacket<?>> packetClass
+    ) {
+
+        return "CKeepAlivePacket".equals(
+                packetClass.getSimpleName()
+        );
+    }
+
+    public static boolean isKeepAlivePacket(
+            String packetName
+    ) {
+
+        return "CKeepAlivePacket".equals(
+                packetName
+        );
+    }
+
+    /*
+     * ------------------------------------------------------------
+     * Packet handling
+     * ------------------------------------------------------------
+     */
+
+    public static String getPacketName(
+            IPacket<?> packet
+    ) {
+
+        if (packet == null) {
+            return "";
+        }
+
+        return packet.getClass()
+                .getSimpleName();
+    }
+
+    public static boolean shouldDelayPacket(
+            IPacket<?> packet
+    ) {
+
+        if (packet == null) {
+            return false;
+        }
+
+        Class<? extends IPacket<?>> packetClass =
+                packet.getClass();
+
+        if (isKeepAlivePacket(
+                packetClass
+        )) {
+            return false;
+        }
+
+        return delayedPacketTypes.contains(
+                packetClass
+        );
+    }
+
+    /**
+     * Handles packets at the current UI Utils interception points.
      *
-     * @return true if UI Utils consumed the packet and the caller
-     *         must NOT send it normally.
+     * Selected packets are delayed.
+     * Unselected packets are allowed through.
+     * Keep-alive is always allowed through.
      */
     public static boolean handleOutgoingPacket(
             IPacket<?> packet,
             NetworkManager networkManager
     ) {
-        if (!isManagedPacket(packet)) {
+
+        if (packet == null) {
+            return false;
+        }
+
+        if (isKeepAlivePacket(
+                packet.getClass()
+        )) {
             return false;
         }
 
         /*
-         * Send Packets disabled:
-         *
-         * Drop the packet completely.
+         * Send Packets OFF only suppresses packets that are
+         * selected in the UI.
          */
-        if (!sendPackets) {
+        if (
+                !sendPackets
+                        && shouldDelayPacket(packet)
+        ) {
             return true;
         }
 
         /*
-         * Delay Packets enabled:
-         *
-         * Store the packet instead of sending it.
+         * Delay only selected packet classes.
          */
-        if (delayPackets) {
-            delayedPackets.add(packet);
-            return true;
-        }
+        if (
+                delayPackets
+                        && shouldDelayPacket(packet)
+        ) {
+            delayedPackets.add(
+                    packet
+            );
 
-        /*
-         * Neither feature is active.
-         *
-         * Let the original caller send normally.
-         */
-        return false;
-    }
-
-    /**
-     * Same handling method used by packet types that are only
-     * managed in a specific call site, such as container-opening
-     * interaction packets.
-     *
-     * This intentionally does not require the packet itself to be
-     * one of the normal managed classes.
-     */
-    public static boolean handleSpecialOutgoingPacket(
-            IPacket<?> packet,
-            NetworkManager networkManager
-    ) {
-        if (!sendPackets) {
-            return true;
-        }
-
-        if (delayPackets) {
-            delayedPackets.add(packet);
             return true;
         }
 
         return false;
     }
 
-    /**
-     * Sends all delayed packets in FIFO order.
+    /*
+     * ------------------------------------------------------------
+     * Queue
+     * ------------------------------------------------------------
      */
+
     public static void flush(
             NetworkManager networkManager
     ) {
+
         if (networkManager == null) {
             delayedPackets.clear();
             return;
         }
 
         while (!delayedPackets.isEmpty()) {
-            IPacket<?> packet = delayedPackets.poll();
 
-            networkManager.sendPacket(packet);
+            IPacket<?> packet =
+                    delayedPackets.poll();
+
+            /*
+             * This is intentionally a direct send so the packet
+             * doesn't immediately get queued again.
+             */
+            networkManager.sendPacket(
+                    packet
+            );
         }
     }
 
-    /**
-     * Discards every queued packet without sending them.
-     */
     public static void clearQueue() {
         delayedPackets.clear();
     }
 
-    /**
-     * Flushes the delayed packet queue and then closes the connection.
-     */
     public static void disconnectAndSend(
             ClientPlayerEntity player
     ) {
-        if (player == null || player.connection == null) {
+
+        if (
+                player == null
+                        || player.connection == null
+        ) {
             clearQueue();
             return;
         }
 
         NetworkManager networkManager =
-                player.connection.getNetworkManager();
+                player.connection
+                        .getNetworkManager();
 
         if (networkManager == null) {
             clearQueue();
             return;
         }
 
-        /*
-         * Release anything waiting first.
-         */
         flush(networkManager);
 
         clearQueue();
 
-        /*
-         * The network manager will handle the actual disconnect.
-         */
         networkManager.closeChannel(
-                new net.minecraft.util.text.StringTextComponent(
+                new StringTextComponent(
                         "UI Utils: Disconnect and Send"
                 )
         );
+    }
+
+    /*
+     * ------------------------------------------------------------
+     * Search
+     * ------------------------------------------------------------
+     */
+
+    public static boolean packetMatchesSearch(
+            String packetName,
+            String search
+    ) {
+
+        if (
+                search == null
+                        || search.trim().isEmpty()
+        ) {
+            return true;
+        }
+
+        return packetName
+                .toLowerCase()
+                .contains(
+                        search.trim()
+                                .toLowerCase()
+                );
     }
 }
