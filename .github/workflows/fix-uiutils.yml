@@ -1,0 +1,150 @@
+name: Fix UI Utils
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: ${{ !contains(github.event.head_commit.message, '[uiutils-fix]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Apply UI Utils fixes from current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path('src/main/java/net/minecraft/client/gui/uiutils')
+
+          # UiUtils.java: expose the already-existing macro screen.
+          p = root / 'UiUtils.java'
+          s = p.read_text()
+          if '"Macros"' not in s:
+              s = s.replace(
+                  '            "Fabricate Packet",\n            "Copy GUI Title JSON"\n',
+                  '            "Fabricate Packet",\n            "Copy GUI Title JSON",\n            "Macros"\n', 1)
+              s = s.replace(
+                  '            case 7:\n                copyGuiTitleJson(screen);\n                break;\n',
+                  '            case 7:\n                copyGuiTitleJson(screen);\n                break;\n\n            case 8:\n                if (screen.mc != null) {\n                    screen.mc.displayGuiScreen(\n                            new UiUtilsMacroScreen(screen)\n                    );\n                }\n                break;\n', 1)
+              p.write_text(s)
+
+          # Packet manager: keep separate selections for SERVERBOUND and
+          # CLIENTBOUND packets, and provide an incoming-packet hook.
+          p = root / 'UiUtilsPacketManager.java'
+          s = p.read_text()
+          if 'delayedServerboundPacketTypes' not in s:
+              s = s.replace(
+                  '    private static final Set<Class<?>> delayedPacketTypes =\n            new LinkedHashSet<>();\n',
+                  '    private static final Set<Class<?>> delayedPacketTypes =\n            new LinkedHashSet<>();\n\n    private static final Set<Class<?>> delayedServerboundPacketTypes =\n            delayedPacketTypes;\n\n    private static final Set<Class<?>> delayedClientboundPacketTypes =\n            new LinkedHashSet<>();\n', 1)
+
+              old = '''    public static List<Class<? extends IPacket<?>>>\n    getAllPacketClasses() {\n\n        return ProtocolType.PLAY.getPacketClasses(\n                PacketDirection.SERVERBOUND\n        );\n    }\n'''
+              new = '''    public static List<Class<? extends IPacket<?>>>\n    getAllPacketClasses() {\n        return getAllPacketClasses(PacketDirection.SERVERBOUND);\n    }\n\n    public static List<Class<? extends IPacket<?>>>\n    getAllPacketClasses(PacketDirection direction) {\n        return ProtocolType.PLAY.getPacketClasses(direction);\n    }\n'''
+              s = s.replace(old, new, 1)
+
+              # Replace packet-name discovery with direction-aware helpers.
+              start = s.index('    public static String[] getAllPacketTypes() {')
+              end = s.index('    /*\n     * ------------------------------------------------------------\n     * Packet selection', start)
+              block = '''    public static String[] getAllPacketTypes() {\n        return getAllPacketTypes(PacketDirection.SERVERBOUND);\n    }\n\n    public static String[] getAllPacketTypes(PacketDirection direction) {\n        List<Class<? extends IPacket<?>>> packetClasses =\n                getAllPacketClasses(direction);\n        String[] result = new String[packetClasses.size()];\n        for (int i = 0; i < packetClasses.size(); ++i) {\n            result[i] = packetClasses.get(i).getSimpleName();\n        }\n        return result;\n    }\n\n    private static Class<?> findPacketClass(\n            String packetName, PacketDirection direction\n    ) {\n        if (packetName == null) return null;\n        for (Class<? extends IPacket<?>> packetClass\n                : getAllPacketClasses(direction)) {\n            if (packetClass.getSimpleName().equals(packetName)) {\n                return packetClass;\n            }\n        }\n        return null;\n    }\n\n    private static Set<Class<?>> getSelection(PacketDirection direction) {\n        return direction == PacketDirection.CLIENTBOUND\n                ? delayedClientboundPacketTypes\n                : delayedServerboundPacketTypes;\n    }\n\n'''
+              s = s[:start] + block + s[end:]
+
+              # Direction-aware selection API.
+              s = s.replace(
+                  'Class<?> packetClass =\n                findPacketClass(packetName);',
+                  'Class<?> packetClass =\n                findPacketClass(packetName, PacketDirection.SERVERBOUND);', 1)
+              s = s.replace(
+                  '            String packetName\n    ) {\n        Class<?> packetClass =\n                findPacketClass(packetName, PacketDirection.SERVERBOUND);',
+                  '            String packetName\n    ) {\n        Class<?> packetClass =\n                findPacketClass(packetName, PacketDirection.SERVERBOUND);', 1)
+
+              # Replace the selection section from isPacketDelayed through clearDelayedPacketTypes.
+              a = s.index('    public static boolean isPacketDelayed(')
+              b = s.index('    /*\n     * ------------------------------------------------------------\n     * Keep-alive protection', a)
+              selection = '''    public static boolean isPacketDelayed(String packetName) {\n        return isPacketDelayed(packetName, PacketDirection.SERVERBOUND);\n    }\n\n    public static boolean isPacketDelayed(\n            String packetName, PacketDirection direction\n    ) {\n        Class<?> packetClass = findPacketClass(packetName, direction);\n        return packetClass != null && getSelection(direction).contains(packetClass);\n    }\n\n    public static Set<String> getSelectedPacketTypes() {\n        return getSelectedPacketTypes(PacketDirection.SERVERBOUND);\n    }\n\n    public static Set<String> getSelectedPacketTypes(PacketDirection direction) {\n        Set<String> result = new LinkedHashSet<>();\n        for (String packet : getAllPacketTypes(direction)) {\n            if (isPacketDelayed(packet, direction)) result.add(packet);\n        }\n        return result;\n    }\n\n    public static void setPacketDelayed(String packetName, boolean delayed) {\n        setPacketDelayed(packetName, delayed, PacketDirection.SERVERBOUND);\n    }\n\n    public static void setPacketDelayed(\n            String packetName, boolean delayed, PacketDirection direction\n    ) {\n        Class<?> packetClass = findPacketClass(packetName, direction);\n        if (packetClass == null || isKeepAlivePacket(packetClass)) return;\n        if (delayed) getSelection(direction).add(packetClass);\n        else getSelection(direction).remove(packetClass);\n    }\n\n    public static boolean togglePacketDelayed(String packetName) {\n        return togglePacketDelayed(packetName, PacketDirection.SERVERBOUND);\n    }\n\n    public static boolean togglePacketDelayed(\n            String packetName, PacketDirection direction\n    ) {\n        Class<?> packetClass = findPacketClass(packetName, direction);\n        if (packetClass == null || isKeepAlivePacket(packetClass)) return false;\n        Set<Class<?>> selection = getSelection(direction);\n        if (selection.contains(packetClass)) {\n            selection.remove(packetClass);\n            return false;\n        }\n        selection.add(packetClass);\n        return true;\n    }\n\n    public static void delayAllPackets() {\n        delayAllPackets(PacketDirection.SERVERBOUND);\n    }\n\n    public static void delayAllPackets(PacketDirection direction) {\n        Set<Class<?>> selection = getSelection(direction);\n        selection.clear();\n        for (Class<? extends IPacket<?>> packetClass : getAllPacketClasses(direction)) {\n            if (!isKeepAlivePacket(packetClass)) selection.add(packetClass);\n        }\n    }\n\n    public static void clearDelayedPacketTypes() {\n        clearDelayedPacketTypes(PacketDirection.SERVERBOUND);\n    }\n\n    public static void clearDelayedPacketTypes(PacketDirection direction) {\n        getSelection(direction).clear();\n    }\n\n'''
+              s = s[:a] + selection + s[b:]
+
+              # Make actual delay lookup direction-aware while retaining the old outgoing API.
+              marker = '''    public static boolean shouldDelayPacket(\n            IPacket<?> packet\n    ) {'''
+              s = s.replace(marker, '''    public static boolean shouldDelayPacket(\n            IPacket<?> packet\n    ) {\n        return shouldDelayPacket(packet, PacketDirection.SERVERBOUND);\n    }\n\n    public static boolean shouldDelayPacket(\n            IPacket<?> packet, PacketDirection direction\n    ) {''', 1)
+              s = s.replace(
+                  '        return delayedPacketTypes.contains(\n                packetClass\n        );\n    }',
+                  '        return getSelection(direction).contains(packetClass);\n    }', 1)
+
+              # Incoming server -> client packets. The caller must skip normal processing when true.
+              insert_at = s.index('    /*\n     * ------------------------------------------------------------\n     * Outgoing packet interception')
+              incoming = '''    /**\n     * Handles a packet received from the server. Returns true when the\n     * packet was consumed and should be processed later.\n     */\n    public static boolean handleIncomingPacket(IPacket<?> packet) {\n        if (packet == null) return false;\n        if (isKeepAlivePacket(packet.getClass())) return false;\n        if (!delayPackets || !shouldDelayPacket(packet, PacketDirection.CLIENTBOUND)) {\n            return false;\n        }\n        delayedIncomingPackets.add(packet);\n        return true;\n    }\n\n    private static final Queue<IPacket<?>> delayedIncomingPackets =\n            new LinkedList<>();\n\n    public static int getDelayedIncomingPacketCount() {\n        return delayedIncomingPackets.size();\n    }\n\n    public static IPacket<?> pollDelayedIncomingPacket() {\n        return delayedIncomingPackets.poll();\n    }\n\n'''
+              s = s[:insert_at] + incoming + s[insert_at:]
+              p.write_text(s)
+
+          # Packet settings screen: rewrite it compactly around the existing UI API.
+          p = root / 'UiUtilsPacketSettingsScreen.java'
+          s = p.read_text()
+          if 'PacketDirection packetDirection' not in s:
+              s = s.replace(
+                  'import net.minecraft.client.gui.screen.Screen;\n',
+                  'import net.minecraft.client.gui.screen.Screen;\nimport net.minecraft.network.PacketDirection;\n', 1)
+              s = s.replace(
+                  '    private int scrollOffset = 0;\n',
+                  '    private int scrollOffset = 0;\n    private PacketDirection packetDirection = PacketDirection.SERVERBOUND;\n', 1)
+              s = s.replace(
+                  'UiUtilsPacketManager\n                        .getAllPacketTypes();',
+                  'UiUtilsPacketManager\n                        .getAllPacketTypes(packetDirection);', 1)
+              s = s.replace(
+                  'UiUtilsPacketManager\n                            .togglePacketDelayed(\n                                    packets[i]\n                            );',
+                  'UiUtilsPacketManager\n                            .togglePacketDelayed(\n                                    packets[i], packetDirection\n                            );', 1)
+              s = s.replace(
+                  'UiUtilsPacketManager\n                        .delayAllPackets();',
+                  'UiUtilsPacketManager\n                        .delayAllPackets(packetDirection);', 1)
+              # clear remains direction-specific.
+              s = s.replace(
+                  'UiUtilsPacketManager\n                        .clearDelayedPacketTypes();',
+                  'UiUtilsPacketManager\n                        .clearDelayedPacketTypes(packetDirection);', 1)
+              # Add direction button to mouse handling.
+              needle = '''        if (button == 0) {\n\n            /*\n             * Delay All\n             */'''
+              replacement = '''        if (button == 0) {\n\n            if (isInside(mouseX, mouseY, left + 226, 8, 104, 22)) {\n                packetDirection = packetDirection == PacketDirection.SERVERBOUND\n                        ? PacketDirection.CLIENTBOUND : PacketDirection.SERVERBOUND;\n                scrollOffset = 0;\n                return true;\n            }\n\n            /*\n             * Delay All\n             */'''
+              s = s.replace(needle, replacement, 1)
+              # Render direction button and heading.
+              needle = '''        /*\n         * --------------------------------------------------------\n         * Search label\n         * --------------------------------------------------------\n         */'''
+              replacement = '''        drawButton(\n                left + 226, 8, 104, 22,\n                packetDirection == PacketDirection.SERVERBOUND ? "C -> S" : "S -> C",\n                mouseX, mouseY\n        );\n\n        /*\n         * --------------------------------------------------------\n         * Search label\n         * --------------------------------------------------------\n         */'''
+              s = s.replace(needle, replacement, 1)
+              s = s.replace('"Search packets:"', 'packetDirection == PacketDirection.SERVERBOUND\n                        ? "Client -> Server packets:"\n                        : "Server -> Client packets:"', 1)
+              # Selected count must use current direction.
+              s = s.replace('getSelectedCount()', 'getSelectedCount(packetDirection)', 1)
+              s = s.replace('getSelectableCount()', 'getSelectableCount(packetDirection)', 1)
+              p.write_text(s)
+
+          # Add the actual inbound hook at the one common packet-processing entry point.
+          p = Path('src/main/java/net/minecraft/network/PacketThreadUtil.java')
+          s = p.read_text()
+          if 'handleIncomingPacket(packetIn)' not in s:
+              s = s.replace(
+                  '      if (!executor.isOnExecutionThread()) {',
+                  '      if (net.minecraft.client.gui.uiutils.UiUtilsPacketManager.handleIncomingPacket(packetIn)) {\n         throw ThreadQuickExitException.INSTANCE;\n      }\n      if (!executor.isOnExecutionThread()) {', 1)
+              p.write_text(s)
+
+          # Fabricator: make the screen honest and useful instead of pretending the
+          # two hard-coded packets are a generic fabricator.
+          p = root / 'UiUtilsFabricatePacketScreen.java'
+          s = p.read_text()
+          s = s.replace('"Fabricate Packet"', '"Fabricate Inventory Packet"', 1)
+          p.write_text(s)
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/main/java/net/minecraft/client/gui/uiutils src/main/java/net/minecraft/network/PacketThreadUtil.java
+          if git diff --cached --quiet; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git commit -m "Fix UI Utils packet directions and macros [uiutils-fix]"
+          git push
