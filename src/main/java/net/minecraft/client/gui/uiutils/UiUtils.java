@@ -1,4 +1,4 @@
-    package net.minecraft.client.gui.uiutils;
+package net.minecraft.client.gui.uiutils;
 
 import net.lax1dude.eaglercraft.EagRuntime;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
@@ -682,6 +682,22 @@ public class UiUtils {
          * UI Utils buttons.
          */
         if (
+                button == 1
+                        && screen instanceof ContainerScreen
+                        && isButtonHovered(
+                                mx,
+                                my,
+                                3
+                        )
+        ) {
+            screen.mc.displayGuiScreen(
+                    new UiUtilsPacketSettingsScreen(screen)
+            );
+
+            return true;
+        }
+
+        if (
                 button == 0
                         && screen instanceof ContainerScreen
         ) {
@@ -691,11 +707,11 @@ public class UiUtils {
                     ++i
             ) {
                 if (
-                        isButtonHovered(
+                      isButtonHovered(
                                 mx,
                                 my,
                                 i
-                        )
+                      )
                 ) {
                     handleButtonClick(
                             screen,
