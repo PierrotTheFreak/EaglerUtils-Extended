@@ -109,7 +109,7 @@ public class UiUtils {
             y += CHAT_INPUT_SPACING;
 
             chatInput = new TextFieldWidget(
-                    screen.getFontRenderer(),
+                screen.getUiUtilsFontRenderer(),
                     PANEL_X + 2,
                     y,
                     PANEL_WIDTH - 4,
