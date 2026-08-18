@@ -1,10 +1,12 @@
 package net.minecraft.client.gui.uiutils;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.PacketDirection;
 import net.minecraft.network.ProtocolType;
+import net.minecraft.network.play.client.CChatMessagePacket;
 import net.minecraft.util.text.StringTextComponent;
 
 import java.util.LinkedHashSet;
@@ -58,7 +60,37 @@ public final class UiUtilsPacketManager {
     public static boolean handleIncomingPacket(IPacket<?> packet){UiUtilsPacketInspector.record(packet,PacketDirection.CLIENTBOUND);UiUtilsPacketReplay.record(packet,PacketDirection.CLIENTBOUND);return delayPackets&&shouldDelayPacket(packet,PacketDirection.CLIENTBOUND);}
     public static boolean handleIncomingPacket(IPacket<?> packet,Runnable processLater){if(!handleIncomingPacket(packet))return false;if(processLater!=null)delayedIncomingTasks.add(processLater);return true;}
     public static IPacket<?> pollDelayedIncomingPacket(){return null;}
-    public static boolean handleOutgoingPacket(IPacket<?> packet,NetworkManager networkManager){if(packet==null||isKeepAlivePacket(packet.getClass()))return false;UiUtilsPacketInspector.record(packet,PacketDirection.SERVERBOUND);UiUtilsPacketReplay.record(packet,PacketDirection.SERVERBOUND);if(!sendPackets&&shouldDelayPacket(packet))return true;if(delayPackets&&shouldDelayPacket(packet)){delayedPackets.add(packet);return true;}return false;}
+    public static boolean handleOutgoingPacket(IPacket<?> packet,NetworkManager networkManager){
+        if(packet instanceof CChatMessagePacket && handleLocalCommand(((CChatMessagePacket)packet).getMessage(),networkManager)) return true;
+        if(packet==null||isKeepAlivePacket(packet.getClass()))return false;
+        UiUtilsPacketInspector.record(packet,PacketDirection.SERVERBOUND);UiUtilsPacketReplay.record(packet,PacketDirection.SERVERBOUND);
+        if(!sendPackets&&shouldDelayPacket(packet))return true;
+        if(delayPackets&&shouldDelayPacket(packet)){delayedPackets.add(packet);return true;}
+        return false;
+    }
+    private static boolean handleLocalCommand(String message,NetworkManager networkManager){
+        if(message==null)return false;
+        String trimmed=message.trim();
+        if(!trimmed.regionMatches(true,0,"/UiUtils",0,8))return false;
+        String rest=trimmed.length()>8?trimmed.substring(8).trim():"";
+        String[] args=rest.isEmpty()?new String[0]:rest.split("\\s+");
+        String command=args.length>0?args[0].toLowerCase():"help";
+        Minecraft mc=Minecraft.getInstance();
+        ClientPlayerEntity player=mc.player;
+        NetworkManager nm=networkManager!=null?networkManager:(player!=null&&player.connection!=null?player.connection.getNetworkManager():null);
+        if("delay_packets".equals(command)){Boolean value=parseBoolean(args,1);setDelayPackets(value==null?!delayPackets:value,nm);notifyCommand("Delay Packets: "+delayPackets);return true;}
+        if("send_packets".equals(command)){Boolean value=parseBoolean(args,1);setSendPackets(value==null?!sendPackets:value);notifyCommand("Send Packets: "+sendPackets);return true;}
+        if("close_without_packet".equals(command)){if(player!=null)player.closeScreenAndDropStack();else mc.displayGuiScreen(null);return true;}
+        if("flush_packets".equals(command)||"send_queued_packets".equals(command)){flush(nm);flushIncomingPackets();notifyCommand("Queued packets flushed.");return true;}
+        if("clear_packets".equals(command)){clearQueue();notifyCommand("Packet queues cleared.");return true;}
+        if("delay_all".equals(command)){delayAllPackets();delayAllPackets(PacketDirection.CLIENTBOUND);notifyCommand("All delayable packets selected.");return true;}
+        if("clear_delay_selection".equals(command)){clearDelayedPacketTypes();clearDelayedPacketTypes(PacketDirection.CLIENTBOUND);notifyCommand("Delay packet selection cleared.");return true;}
+        if("disconnect_and_send".equals(command)){disconnectAndSend(player);return true;}
+        notifyCommand("/UiUtils delay_packets <true|false>, send_packets <true|false>, close_without_packet, flush_packets, clear_packets, delay_all, clear_delay_selection, disconnect_and_send");
+        return true;
+    }
+    private static Boolean parseBoolean(String[] args,int index){if(args.length<=index)return null;String s=args[index].toLowerCase();if("true".equals(s)||"t".equals(s))return true;if("false".equals(s)||"f".equals(s))return false;return null;}
+    private static void notifyCommand(String message){Minecraft mc=Minecraft.getInstance();if(mc.ingameGUI!=null&&mc.ingameGUI.getChatGUI()!=null)mc.ingameGUI.getChatGUI().printChatMessage(new StringTextComponent("[UiUtils] "+message));}
     public static boolean handleSpecialOutgoingPacket(IPacket<?> packet,NetworkManager networkManager){return handleOutgoingPacket(packet,networkManager);}
     public static void tick(NetworkManager networkManager){UiUtilsMacroManager.tick();}
     public static void flush(NetworkManager networkManager){if(networkManager==null){delayedPackets.clear();return;}while(!delayedPackets.isEmpty())networkManager.sendPacket(delayedPackets.poll());}
