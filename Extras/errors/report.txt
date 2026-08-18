@@ -3,12 +3,12 @@ Eaglercraft WASM Build Report
 ========================================
 
 Repository: PierrotTheFreak/EaglerUtils-Extended
-Commit:     306ed6937bc220fb6113ebc972b6b3e54f956297
+Commit:     d377481e2fa42d42a62e7a0a7b549156a372b434
 Branch:     main
-Run ID:     32189491432
+Run ID:     32193472587
 Runner OS:  Linux
-Runner:     GitHub Actions 1000008726
-Started:    2026-08-18 21:49:00 UTC
+Runner:     GitHub Actions 1000008728
+Started:    2026-08-18 22:38:22 UTC
 
 Build task:
   ./gradlew makeMainWasmClientBundle
@@ -60,19 +60,19 @@ OS:            Linux 6.17.0-1022-azure amd64
 
 
 Disk space:
-Filesystem      Size  Used Avail Use% Mounted on
-/dev/root       145G   60G   86G  41% /
-tmpfs           7.9G     0  7.9G   0% /dev/shm
-tmpfs           3.2G 1004K  3.2G   1% /run
-tmpfs           5.0M     0  5.0M   0% /run/lock
-efivarfs        128M   32K  128M   1% /sys/firmware/efi/efivars
-/dev/sda16      881M   64M  756M   8% /boot
-/dev/sda15      105M  6.2M   99M   6% /boot/efi
-tmpfs           1.6G   12K  1.6G   1% /run/user/1001
+Filesystem       Size  Used Avail Use% Mounted on
+/dev/root        145G   60G   86G  42% /
+tmpfs            7.9G     0  7.9G   0% /dev/shm
+tmpfs            3.2G 1008K  3.2G   1% /run
+tmpfs            5.0M     0  5.0M   0% /run/lock
+efivarfs         128M   32K  128M   1% /sys/firmware/efi/efivars
+/dev/nvme0n1p16  881M   64M  756M   8% /boot
+/dev/nvme0n1p15  105M  6.2M   99M   6% /boot/efi
+tmpfs            1.6G   12K  1.6G   1% /run/user/1001
 
 Memory:
                total        used        free      shared  buff/cache   available
-Mem:            15Gi       1.3Gi        10Gi        47Mi       4.3Gi        14Gi
+Mem:            15Gi       1.3Gi        10Gi        47Mi       4.6Gi        14Gi
 Swap:          3.0Gi          0B       3.0Gi
 
 Working directory:
@@ -90,8 +90,8 @@ SUCCESS
 ========================================
 GENERATED ARTIFACTS
 ========================================
-target_teavm_wasm_gc/javascript_dist/Eaglercraft_1.14.4_WASM-GC_Offline_Download.html (35272200 bytes)
-target_teavm_wasm_gc/javascript_dist/assets.epw (26444083 bytes)
+target_teavm_wasm_gc/javascript_dist/Eaglercraft_1.14.4_WASM-GC_Offline_Download.html (35271932 bytes)
+target_teavm_wasm_gc/javascript_dist/assets.epw (26443883 bytes)
 target_teavm_wasm_gc/javascript_dist/bootstrap.js (7830 bytes)
 target_teavm_wasm_gc/javascript_dist/favicon.png (1258 bytes)
 
@@ -102,19 +102,21 @@ IMPORTANT FILE CHECKS
 ========================================
 
 bootstrap.js:
--rw-r--r-- 1 runner runner 7.7K Aug 18 21:49 target_teavm_wasm_gc/javascript_dist/bootstrap.js
+-rw-r--r-- 1 runner runner 7.7K Aug 18 22:38 target_teavm_wasm_gc/javascript_dist/bootstrap.js
 
 assets.epw:
--rw-r--r-- 1 runner runner 26M Aug 18 21:52 target_teavm_wasm_gc/javascript_dist/assets.epw
+-rw-r--r-- 1 runner runner 26M Aug 18 22:41 target_teavm_wasm_gc/javascript_dist/assets.epw
 
 favicon.png:
--rw-r--r-- 1 runner runner 1.3K Aug 18 21:52 target_teavm_wasm_gc/javascript_dist/favicon.png
+-rw-r--r-- 1 runner runner 1.3K Aug 18 22:41 target_teavm_wasm_gc/javascript_dist/favicon.png
 
 ========================================
 PROJECT DIAGNOSTICS
 ========================================
 
 Tracked bootstrap-related files:
+Extras/artifacts/bootstrap.js
+Extras/errors/bootstrap-build.log
 src/main/java/net/minecraft/util/registry/Bootstrap.java
 src/wasm-gc-teavm-bootstrap/js/externs.js
 src/wasm-gc-teavm-bootstrap/js/main.js
@@ -122,6 +124,8 @@ target_teavm_wasm_gc/CompileBootstrapJS.bat
 target_teavm_wasm_gc/CompileBootstrapJS.sh
 
 All bootstrap-related files:
+./Extras/artifacts/bootstrap.js (7830 bytes)
+./Extras/errors/bootstrap-build.log (651 bytes)
 ./reports/bootstrap-build.log (651 bytes)
 ./src/main/java/net/minecraft/util/registry/Bootstrap.java (4060 bytes)
 ./target_teavm_wasm_gc/CompileBootstrapJS.bat (372 bytes)
@@ -154,4 +158,4 @@ Git status:
 ========================================
 BUILD COMPLETED
 ========================================
-Finished: 2026-08-18 21:52:51 UTC
+Finished: 2026-08-18 22:41:17 UTC
