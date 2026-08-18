@@ -1,0 +1,27 @@
+========================================
+Repository Build Output
+========================================
+
+Repository: PierrotTheFreak/EaglerUtils-Extended
+Commit:     b84c261a33491167d1da57e493adf04bf2cc0f80
+Branch:     main
+Run ID:     32185864732
+Runner OS:  Linux
+Finished:   2026-08-18 21:08:01 UTC
+
+========================================
+WASM ARTIFACTS
+========================================
+
+Extras/artifacts/assets.epw (26416279 bytes)
+Extras/artifacts/bootstrap.js (7830 bytes)
+Extras/artifacts/favicon.png (1258 bytes)
+
+========================================
+ERROR / REPORT FILES
+========================================
+
+Extras/errors/bootstrap-build.log (651 bytes)
+Extras/errors/build.log (45213 bytes)
+Extras/errors/report.txt (45831 bytes)
+Extras/errors/repository-build-info.txt (638 bytes)
